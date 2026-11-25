@@ -5,3 +5,4 @@ __pycache__/
 console/node_modules/
 console/dist/
 build/
+console/*.tsbuildinfo

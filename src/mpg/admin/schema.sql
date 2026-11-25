@@ -1,4 +1,4 @@
--- MPG 스키마 (테이블 8개). 멱등: 여러 번 실행해도 안전.
+-- MPG 스키마 (테이블 9개: 기획서 8개 + path_thresholds). 멱등: 여러 번 실행해도 안전.
 -- 역할: mpg_admin(admin-api, 소유자 아님), mpg_gateway(읽기 전용, policy_versions만).
 
 CREATE TABLE IF NOT EXISTS admin_users (
@@ -43,6 +43,21 @@ CREATE TABLE IF NOT EXISTS rule_exceptions (
     created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS rule_exceptions_active ON rule_exceptions(active, expires_at);
+
+-- 경로(·파라미터)별 차단 임계값. 탐지 임계값은 전역값을 유지한다.
+CREATE TABLE IF NOT EXISTS path_thresholds (
+    id          SERIAL PRIMARY KEY,
+    path        TEXT NOT NULL CHECK (path LIKE '/%' AND path !~ '[*?]'),
+    param       TEXT CHECK (param IS NULL OR (param <> '' AND param !~ '[*?]')),
+    prefix      BOOLEAN NOT NULL DEFAULT FALSE,
+    threshold   INT NOT NULL CHECK (threshold BETWEEN 3 AND 20),
+    reason      TEXT NOT NULL DEFAULT '',
+    active      BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by  TEXT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS path_thresholds_unique_active
+    ON path_thresholds(path, coalesce(param, ''), prefix) WHERE active;
 
 CREATE TABLE IF NOT EXISTS policy_versions (
     version       INT PRIMARY KEY,
@@ -128,14 +143,14 @@ DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mpg_admin') THEN
         GRANT SELECT, INSERT, UPDATE, DELETE ON admin_users, rules, rule_exceptions, policy_versions,
-            regression_runs, security_events, event_matches TO mpg_admin;
+            regression_runs, security_events, event_matches, path_thresholds TO mpg_admin;
         GRANT SELECT, INSERT ON audit_log TO mpg_admin;
         REVOKE UPDATE, DELETE, TRUNCATE ON audit_log FROM mpg_admin;
         GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO mpg_admin;
     END IF;
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mpg_gateway') THEN
         REVOKE ALL ON admin_users, rules, rule_exceptions, regression_runs, security_events,
-            event_matches, audit_log FROM mpg_gateway;
+            event_matches, audit_log, path_thresholds FROM mpg_gateway;
         GRANT SELECT ON policy_versions TO mpg_gateway;
     END IF;
 END $$;

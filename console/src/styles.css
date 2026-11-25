@@ -154,6 +154,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .form-grid label, .login label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
 .form-grid label input, .form-grid label select, .form-grid label textarea { color: var(--text); }
+.form-grid label.row { flex-direction: row; align-items: center; align-self: end; padding-bottom: 8px; }
 .span2 { grid-column: span 2; }
 .span3 { grid-column: span 3; }
 

@@ -60,8 +60,11 @@ async def draft_snapshot(conn, threshold: int | None = None) -> dict[str, Any]:
     if threshold is None:
         active = await active_version(conn)
         threshold = active["snapshot"].get("threshold", 6) if active else 6
+    pts = await conn.fetch("SELECT id, path, param, prefix, threshold FROM path_thresholds WHERE active ORDER BY id")
     return {
         "threshold": threshold,
+        "path_thresholds": [{"id": str(t["id"]), "path": t["path"], "param": t["param"],
+                             "prefix": t["prefix"], "threshold": t["threshold"]} for t in pts],
         "rules": [_rule_row_to_dict(r) for r in rules],
         "exceptions": [{"id": str(e["id"]), "rule_id": e["rule_id"], "path": e["path"],
                         "param": e["param"], "expires_at": e["expires_at"].isoformat()} for e in excs],
@@ -97,6 +100,15 @@ def diff_snapshots(draft: dict, active: dict | None) -> list[dict[str, str]]:
         out.append({"type": "exception", "id": eid, "change": "added"})
     for eid in sorted(a_exc - d_exc, key=int):
         out.append({"type": "exception", "id": eid, "change": "removed_or_expired"})
+    a_pt = {str(t["id"]): t for t in active.get("path_thresholds", [])}
+    d_pt = {str(t["id"]): t for t in draft.get("path_thresholds", [])}
+    for tid in sorted(set(a_pt) | set(d_pt), key=int):
+        if tid not in a_pt:
+            out.append({"type": "path_threshold", "id": tid, "change": "added"})
+        elif tid not in d_pt:
+            out.append({"type": "path_threshold", "id": tid, "change": "removed"})
+        elif a_pt[tid] != d_pt[tid]:
+            out.append({"type": "path_threshold", "id": tid, "change": "modified"})
     if draft.get("threshold") != active.get("threshold"):
         out.append({"type": "policy", "id": "threshold", "change": "modified"})
     return out
@@ -163,12 +175,24 @@ async def test_draft(conn, datasets: Datasets) -> dict:
         "candidate": _brief(rep),
         "passed": not reasons,
         "reasons": reasons,
+        "warnings": gate_warnings(rep, base),
         "new_misses": _new_items(rep["misses"], base["misses"]) if base else rep["misses"],
         "new_false_positives": _new_items(rep["false_positive_list"], base["false_positive_list"])
         if base else rep["false_positive_list"],
         "known_false_positives": await known_false_positives(conn, policy),
         "report": rep,
     }
+
+
+def gate_warnings(candidate: dict, baseline: dict | None) -> list[str]:
+    """발행을 막지는 않지만 운영자가 알아야 할 변화(경로 임계값을 올리면 차단율이 내려간다)."""
+    if not baseline:
+        return []
+    out = []
+    drop = baseline.get("block_rate", 0) - candidate.get("block_rate", 0)
+    if drop > 0:
+        out.append(f"block_rate_dropped:{drop:.4f}")
+    return out
 
 
 def _brief(rep: dict) -> dict:
@@ -235,7 +259,7 @@ async def _publish(pool, redis, datasets: Datasets, actor: str, comment: str,
     published_at = datetime.now(timezone.utc).isoformat()
     await notify(redis, version, published_at)
     return {"version": version, "published_at": published_at, "changes": changes,
-            "report": _brief(rep)}
+            "report": _brief(rep), "warnings": gate_warnings(rep, base)}
 
 
 async def rollback(pool, redis, datasets: Datasets, target: int, actor: str, reason: str = "",
@@ -274,6 +298,9 @@ async def _restore_working_copy(conn, snap: dict, actor: str) -> None:
                        " WHERE NOT (id = ANY($1::text[]))", ids, actor)
     keep = [int(e["id"]) for e in snap.get("exceptions", []) if e.get("id") is not None]
     await conn.execute("UPDATE rule_exceptions SET active = (id = ANY($1::int[]))", keep)
+    keep_pt = [int(t["id"]) for t in snap.get("path_thresholds", []) if t.get("id") is not None]
+    await conn.execute("UPDATE path_thresholds SET active = false WHERE active AND NOT (id = ANY($1::int[]))", keep_pt)
+    await conn.execute("UPDATE path_thresholds SET active = true WHERE id = ANY($1::int[])", keep_pt)
 
 
 async def upsert_rule(conn, d: dict, actor: str) -> None:
@@ -314,7 +341,9 @@ def sandbox(policy: Policy, value: str, location: str, path: str, param: str) ->
         raise PolicyError(400, "invalid_location") from None
     pipe = DetectionPipeline(policy)
     v = pipe.inspect(InspectionRequest("POST", path, (Field(loc, param, value),)))
-    return verdict_detail(v)
+    out = verdict_detail(v)
+    out["detect_threshold"] = min(policy.threshold, out["threshold"])
+    return out
 
 
 def verdict_detail(v) -> dict:
@@ -323,7 +352,9 @@ def verdict_detail(v) -> dict:
         "action": v.action.value,
         "risk_score": v.risk_score,
         "policy_version": v.policy_version,
-        "threshold_note": "BLOCK 모드 룰 점수 합 ≥ 임계값이면 차단",
+        "threshold": v.fields[0].block_threshold if v.fields else 6,
+        "detect_threshold": None,
+        "threshold_note": "BLOCK 모드 룰 점수 합 ≥ 차단 임계값이면 차단, 전체 점수 ≥ 탐지 임계값이면 기록",
         "steps": [{"name": n, "value": t} for n, t in (f.normalization.steps if f else [])],
         "signals": sorted(f.normalization.signals) if f else [],
         "candidates": list(f.candidates) if f else [],

@@ -19,7 +19,7 @@ type Detail = EventRow & {
 };
 type Draft = { rule_id: string; path: string; param: string; expires_in_days: number; source_request_id: string; reason: string };
 type TestResult = {
-  passed: boolean; reasons: string[];
+  passed: boolean; reasons: string[]; warnings?: string[];
   current: Rates | null; candidate: Rates;
   new_misses: { payload: string; path: string; param: string }[];
   new_false_positives: { payload: string }[];
@@ -324,6 +324,13 @@ export function TestTable({ t }: { t: TestResult }) {
       <div className={t.passed ? "banner ok" : "banner crit"}>
         {t.passed ? "회귀 테스트 통과 — 발행할 수 있습니다." : `회귀 테스트 실패: ${t.reasons.join(", ")}`}
       </div>
+      {(t.warnings ?? []).map((w) => (
+        <div key={w} className="banner warn">
+          {w.startsWith("block_rate_dropped")
+            ? `차단율이 ${(Number(w.split(":")[1]) * 100).toFixed(2)}%p 내려갑니다(경로 임계값 완화 등). 해당 요청은 차단 대신 기록됩니다.`
+            : w}
+        </div>
+      ))}
       <table className="table">
         <thead><tr><th>지표</th><th className="num">현재(발행본)</th><th className="num">변경 후</th></tr></thead>
         <tbody>

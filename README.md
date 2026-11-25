@@ -42,7 +42,7 @@ npm·PyPI에 닿지 않는 환경: 호스트에서 `pip wheel '.[server]' -w dep
 | gateway | FastAPI + Uvicorn(워커 2), TLS 종료, 파싱 → 정규화 → 프리필터 → 정밀 분석 → 점수 판정 → 전달 | edge, gw-net, data-net |
 | admin-api | REST `/admin/api`, 인증·RBAC·CSRF·감사, 회귀 게이트 발행, 이벤트 소비자, 보존 배치 | data-net, mgmt-net |
 | admin-console | React 19 정적 파일 + nginx(TLS, CSP, `/admin/api` 프록시) | edge, mgmt-net |
-| postgres | PostgreSQL 18 — 테이블 8개, 앱 계정 분리(gateway는 `policy_versions` 읽기만) | data-net |
+| postgres | PostgreSQL 18 — 테이블 9개, 앱 계정 분리(gateway는 `policy_versions` 읽기만) | data-net |
 | redis | Redis 8 — 이벤트 스트림, 정책 알림, 세션. ACL로 계정별 키·채널 제한 | data-net |
 | backend | 데모용 "기존 서비스" (Prepared Statement·출력 이스케이프 갖춤) | gw-net(내부 전용) |
 | init | 1회성: 최초 관리자 생성 + 룰 적재·v1 발행 | data-net |
@@ -69,6 +69,8 @@ docs/                report.md, 측정 원자료(JSON), 스크린샷
 - `BLOCK` 모드 룰 점수 합 ≥ 6 → **BLOCK(403)** / 전체 합 ≥ 6 → **DETECT_ONLY(전달 + 기록)** / 그 외 **ALLOW**.
 - 우회 신호(다중 인코딩·전각·주석·제어문자 등)도 ENC 룰이라 예외·모드·가중치를 똑같이 다룬다.
 - 예외는 `룰 1개 · 경로 · 파라미터 · 만료일(최대 180일)` 필수, 와일드카드 금지.
+- **경로별 차단 임계값**: 경로(·파라미터)마다 차단 기준만 3 ~ 전역+4 로 바꿀 수 있다(ADMIN). 탐지 기준은 전역값 그대로라
+  올리더라도 그 사이 점수는 DETECT_ONLY로 기록된다. 예: 기술 게시판 `/api/qna/posts`·`content` = 8 (근거는 `docs/report.md` 4장).
 - 정책 변경은 작업본에 쌓이고, 발행 때 회귀 테스트를 다시 돌려 탐지율이 떨어지거나 차단 오탐이 늘면 422로 거부한다.
 
 ## 운영 명령 (`mpgctl`, admin-api 컨테이너 안)
@@ -98,6 +100,18 @@ MPG_E2E_GATEWAY=https://localhost MPG_E2E_ADMIN=https://localhost:9443 MPG_E2E_V
 e2e는 `lee`(ADMIN)·`op1`(OPERATOR)·`viewer1`(VIEWER) 계정이 필요하다(`tests/e2e/test_e2e.py` 상단의 환경 변수로 비밀번호 지정).
 게이트웨이의 `/__mpg/health` 는 내부 대역에서만 열리므로 호스트에서 e2e를 돌릴 때는
 `GATEWAY_INTERNAL_CIDRS=127.0.0.0/8,172.28.30.0/24,172.28.40.1/32` 로 기동한다(172.28.40.1은 호스트 로컬 접속만 해당).
+
+## 기존 배포 업그레이드
+
+스키마는 멱등이라 새 버전을 받은 뒤 superuser로 한 번 적용하고 다시 띄우면 된다(이번 버전은 `path_thresholds` 테이블 추가).
+
+```bash
+docker compose up -d postgres && docker compose exec -T postgres psql -U postgres -d mpg < src/mpg/admin/schema.sql
+```
+
+```bash
+docker compose up -d --build
+```
 
 ## 운영 배포 시 바꿀 것
 

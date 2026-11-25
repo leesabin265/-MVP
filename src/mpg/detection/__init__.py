@@ -7,6 +7,7 @@ from .models import (
     Location,
     Match,
     Mode,
+    PathThreshold,
     Policy,
     Rule,
     RuleException,
@@ -21,7 +22,7 @@ from .scorer import RiskScorer
 
 __all__ = [
     "Action", "Category", "DetectionPipeline", "Field", "InspectionRequest",
-    "KeywordPrefilter", "Location", "Match", "Mode", "Normalizer", "Policy", "RiskScorer",
+    "KeywordPrefilter", "Location", "Match", "Mode", "Normalizer", "PathThreshold", "Policy", "RiskScorer",
     "Rule", "RuleError", "RuleException", "RuleKind", "ScriptDetector", "SqliDetector",
     "Verdict", "XssDetector", "load_policy", "load_rules",
 ]

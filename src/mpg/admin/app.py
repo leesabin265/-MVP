@@ -26,7 +26,7 @@ from mpg.common.config import (
     redis_url,
 )
 from mpg.common.logging import setup_logging
-from mpg.detection.rules import RuleError, exception_from_dict, rule_from_dict
+from mpg.detection.rules import RuleError, exception_from_dict, path_threshold_from_dict, rule_from_dict
 
 from . import alerts as alerts_mod
 from . import auth
@@ -92,6 +92,14 @@ class ExceptionIn(BaseModel):
     expires_in_days: int | None = PField(default=None, ge=1, le=MAX_EXCEPTION_DAYS)
     reason: str = PField(default="", max_length=500)
     source_request_id: UUID | None = None
+
+
+class PathThresholdIn(BaseModel):
+    path: str = PField(min_length=1, max_length=512)
+    param: str | None = PField(default=None, max_length=256)
+    prefix: bool = False
+    threshold: int = PField(ge=1, le=20)
+    reason: str = PField(min_length=5, max_length=500)
 
 
 class PublishIn(BaseModel):
@@ -542,6 +550,60 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 if not r:
                     raise HTTPException(404, {"error": "not_found"})
                 await audit(conn, sess.login_id, "exception.deactivate", str(eid), dict(r), None,
+                            client_ip=request.state.ip)
+            return {"ok": True, "unpublished_changes": await _changes_count(conn)}
+
+    # ── 경로별 차단 임계값 ──
+    @api.get("/thresholds")
+    async def thresholds_list(sess: auth.Session = Depends(viewer), include_inactive: bool = False):
+        async with st["pool"].acquire() as conn:
+            rows = await conn.fetch("SELECT * FROM path_thresholds"
+                                    + ("" if include_inactive else " WHERE active") + " ORDER BY id DESC")
+            active = await ps.active_version(conn)
+        snap = active["snapshot"] if active else {}
+        published = {str(t["id"]) for t in snap.get("path_thresholds", [])}
+        return {
+            "global_threshold": snap.get("threshold", 6),
+            "items": [{
+                "id": r["id"], "path": r["path"], "param": r["param"], "prefix": r["prefix"],
+                "threshold": r["threshold"], "reason": r["reason"], "active": r["active"],
+                "created_by": r["created_by"], "created_at": r["created_at"].isoformat(),
+                "published": str(r["id"]) in published,
+            } for r in rows],
+        }
+
+    @api.post("/thresholds", status_code=201)
+    async def thresholds_create(body: PathThresholdIn, request: Request, sess: auth.Session = Depends(admin)):
+        param = body.param.strip() if body.param and body.param.strip() else None
+        async with st["pool"].acquire() as conn:
+            async with conn.transaction():
+                active = await ps.active_version(conn)
+                global_t = active["snapshot"].get("threshold", 6) if active else 6
+                path_threshold_from_dict({"path": body.path, "param": param, "prefix": body.prefix,
+                                          "threshold": body.threshold}, global_t)
+                dup = await conn.fetchval(
+                    "SELECT id FROM path_thresholds WHERE active AND path=$1 AND coalesce(param,'')=$2 AND prefix=$3",
+                    body.path, param or "", body.prefix)
+                if dup:
+                    raise HTTPException(409, {"error": "threshold_exists", "id": dup})
+                tid = await conn.fetchval(
+                    "INSERT INTO path_thresholds(path, param, prefix, threshold, reason, created_by)"
+                    " VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
+                    body.path, param, body.prefix, body.threshold, body.reason, sess.login_id)
+                await audit(conn, sess.login_id, "threshold.create", str(tid), None,
+                            {"path": body.path, "param": param, "prefix": body.prefix,
+                             "threshold": body.threshold, "global": global_t}, body.reason, request.state.ip)
+            return {"id": tid, "unpublished_changes": await _changes_count(conn)}
+
+    @api.delete("/thresholds/{tid}")
+    async def thresholds_delete(tid: int, request: Request, sess: auth.Session = Depends(admin)):
+        async with st["pool"].acquire() as conn:
+            async with conn.transaction():
+                r = await conn.fetchrow("UPDATE path_thresholds SET active=false WHERE id=$1 AND active"
+                                        " RETURNING path, param, prefix, threshold", tid)
+                if not r:
+                    raise HTTPException(404, {"error": "not_found"})
+                await audit(conn, sess.login_id, "threshold.deactivate", str(tid), dict(r), None,
                             client_ip=request.state.ip)
             return {"ok": True, "unpublished_changes": await _changes_count(conn)}
 

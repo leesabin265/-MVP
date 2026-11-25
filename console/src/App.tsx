@@ -6,16 +6,18 @@ import Dashboard from "./pages/Dashboard";
 import Events from "./pages/Events";
 import Rules from "./pages/Rules";
 import Exceptions from "./pages/Exceptions";
+import Thresholds from "./pages/Thresholds";
 import Policy from "./pages/Policy";
 import Sandbox from "./pages/Sandbox";
 import Audit from "./pages/Audit";
 
-type Tab = "dashboard" | "events" | "rules" | "exceptions" | "policy" | "sandbox" | "audit";
+type Tab = "dashboard" | "events" | "rules" | "exceptions" | "thresholds" | "policy" | "sandbox" | "audit";
 const TABS: { id: Tab; label: string; need?: "OPERATOR" | "ADMIN" }[] = [
   { id: "dashboard", label: "대시보드" },
   { id: "events", label: "탐지 로그" },
   { id: "rules", label: "룰" },
   { id: "exceptions", label: "예외" },
+  { id: "thresholds", label: "경로 임계값" },
   { id: "policy", label: "정책 버전" },
   { id: "sandbox", label: "샌드박스", need: "OPERATOR" },
   { id: "audit", label: "감사 기록", need: "ADMIN" },
@@ -130,6 +132,7 @@ export default function App() {
         {tab === "events" && <Events ctx={ctx} focus={focusEvent} clearFocus={() => setFocusEvent(null)} />}
         {tab === "rules" && <Rules ctx={ctx} />}
         {tab === "exceptions" && <Exceptions ctx={ctx} />}
+        {tab === "thresholds" && <Thresholds ctx={ctx} />}
         {tab === "policy" && <Policy ctx={ctx} />}
         {tab === "sandbox" && <Sandbox ctx={ctx} />}
         {tab === "audit" && <Audit ctx={ctx} />}

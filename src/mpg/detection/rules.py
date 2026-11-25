@@ -7,7 +7,10 @@ from typing import Any, Iterable
 import re2
 import yaml
 
-from .models import Category, Mode, Policy, Rule, RuleException, RuleKind
+from .models import Category, Mode, PathThreshold, Policy, Rule, RuleException, RuleKind
+
+THRESHOLD_MIN = 3
+THRESHOLD_MAX_RAISE = 4
 
 _OPTS = re2.Options()
 _OPTS.log_errors = False
@@ -116,13 +119,37 @@ def exception_from_dict(d: dict[str, Any]) -> RuleException:
     )
 
 
+def path_threshold_from_dict(d: dict[str, Any], global_threshold: int = 6) -> PathThreshold:
+    path = str(d.get("path") or "")
+    if not path.startswith("/"):
+        raise RuleError("path threshold: path must start with '/'")
+    param = d.get("param") or None
+    if any(ch in path + (param or "") for ch in "*?"):
+        raise RuleError("path threshold: wildcards are not allowed (use prefix: true)")
+    try:
+        t = int(d["threshold"])
+    except (KeyError, TypeError, ValueError):
+        raise RuleError("path threshold: 'threshold' must be an integer") from None
+    hi = global_threshold + THRESHOLD_MAX_RAISE
+    if not THRESHOLD_MIN <= t <= hi:
+        raise RuleError(f"path threshold: threshold must be {THRESHOLD_MIN}..{hi}")
+    prefix = bool(d.get("prefix", False))
+    if prefix and len(path) < 2:
+        raise RuleError("path threshold: prefix '/' would cover every path; change the global threshold instead")
+    return PathThreshold(path=path, threshold=t, param=param, prefix=prefix,
+                         id=str(d["id"]) if d.get("id") is not None else None)
+
+
 def load_policy(path: str | Path, version: int = 1, threshold: int = 6) -> Policy:
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     rules = load_rules(data["rules"])
     exceptions = tuple(exception_from_dict(e) for e in data.get("exceptions") or ())
+    th = int(data.get("threshold", threshold))
+    pts = tuple(path_threshold_from_dict(t, th) for t in data.get("path_thresholds") or ())
     return Policy(
         version=int(data.get("version", version)),
         rules=rules,
         exceptions=exceptions,
-        threshold=int(data.get("threshold", threshold)),
+        threshold=th,
+        path_thresholds=pts,
     )

@@ -6,8 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from mpg.detection.models import Policy, Rule, RuleException
-from mpg.detection.rules import exception_from_dict, rule_from_dict
+from mpg.detection.models import PathThreshold, Policy, Rule, RuleException
+from mpg.detection.rules import exception_from_dict, path_threshold_from_dict, rule_from_dict
 
 
 def rule_to_dict(r: Rule) -> dict[str, Any]:
@@ -41,12 +41,17 @@ def exception_to_dict(e: RuleException) -> dict[str, Any]:
     }
 
 
+def path_threshold_to_dict(t: PathThreshold) -> dict[str, Any]:
+    return {"id": t.id, "path": t.path, "param": t.param, "prefix": t.prefix, "threshold": t.threshold}
+
+
 def policy_to_snapshot(p: Policy) -> dict[str, Any]:
     return {
         "version": p.version,
         "threshold": p.threshold,
         "rules": [rule_to_dict(r) for r in p.rules],
         "exceptions": [exception_to_dict(e) for e in p.exceptions],
+        "path_thresholds": [path_threshold_to_dict(t) for t in p.path_thresholds],
     }
 
 
@@ -60,11 +65,13 @@ def policy_from_snapshot(snap: dict[str, Any] | str, version: int | None = None)
         if e.get("id") is not None:
             e["id"] = str(e["id"])
         excs.append(exception_from_dict(e))
+    th = int(snap.get("threshold", 6))
     return Policy(
         version=int(version if version is not None else snap.get("version", 0)),
         rules=rules,
         exceptions=tuple(excs),
-        threshold=int(snap.get("threshold", 6)),
+        threshold=th,
+        path_thresholds=tuple(path_threshold_from_dict(t, th) for t in snap.get("path_thresholds") or ()),
     )
 
 

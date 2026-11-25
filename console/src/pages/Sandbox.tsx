@@ -4,7 +4,7 @@ import type { Ctx } from "../App";
 import { ActionBadge, Code, ModeBadge } from "../ui";
 
 type Verdict = {
-  action: string; risk_score: number; policy_version: number; steps: { name: string; value: string }[];
+  action: string; risk_score: number; policy_version: number; threshold: number; detect_threshold: number; steps: { name: string; value: string }[];
   signals: string[]; candidates: string[]; elapsed_ms: number;
   matches: { rule_id: string; category: string; score: number; mode: string; excepted: boolean; evidence: string }[];
 };
@@ -70,7 +70,7 @@ export default function Sandbox({ ctx }: { ctx: Ctx }) {
         <section className="card stack">
           <div className="row">
             <ActionBadge action={v.action} /> <b>위험 점수 {v.risk_score}</b>
-            <span className="muted small">임계값 6 · {v.elapsed_ms} ms</span>
+            <span className="muted small">차단 임계값 {v.threshold} · 탐지 임계값 {v.detect_threshold} · {v.elapsed_ms} ms</span>
           </div>
           <ol className="steps">
             {v.steps.map((s, i) => (

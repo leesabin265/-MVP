@@ -3,6 +3,8 @@
 # 실행:      docker compose up -d --build
 # 외부 공개: gateway(443), admin-console(9443, 허용 IP만). 나머지는 내부 네트워크에만 있다.
 
+name: mpg
+
 x-hardening: &hardening
   security_opt: ["no-new-privileges:true"]
   restart: unless-stopped

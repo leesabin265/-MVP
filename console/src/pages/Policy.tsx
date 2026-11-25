@@ -44,7 +44,7 @@ export default function Policy({ ctx }: { ctx: Ctx }) {
       if (e instanceof ApiError && e.status === 422) {
         const d = e.body?.detail ?? e.body;
         setTest({
-          passed: false, reasons: d.reasons ?? [], current: d.current, candidate: d.candidate,
+          passed: false, reasons: d.reasons ?? [], warnings: [], current: d.current, candidate: d.candidate,
           new_misses: d.new_misses ?? [], new_false_positives: d.new_false_positives ?? [],
           known_false_positives: { total: 0, still_blocked: 0 }, changes: changes.data?.changes ?? [],
         });
@@ -89,7 +89,7 @@ export default function Policy({ ctx }: { ctx: Ctx }) {
           <ul className="list">
             {list.map((c, i) => (
               <li key={i}>
-                <span className="badge gray">{c.type === "rule" ? "룰" : c.type === "exception" ? "예외" : "정책"}</span>{" "}
+                <span className="badge gray">{c.type === "rule" ? "룰" : c.type === "exception" ? "예외" : c.type === "path_threshold" ? "경로 임계값" : "정책"}</span>{" "}
                 <span className="mono">{c.id}</span> {c.change}
               </li>
             ))}

@@ -31,7 +31,7 @@ class DetectionPipeline:
             XssDetector(policy.rules),
             ScriptDetector(policy.rules),
         )
-        self.scorer = RiskScorer(policy.rules, policy.exceptions, policy.threshold)
+        self.scorer = RiskScorer(policy.rules, policy.exceptions, policy.threshold, policy.path_thresholds)
 
     def inspect(self, req: InspectionRequest, now: datetime | None = None) -> Verdict:
         t0 = time.perf_counter()
@@ -51,8 +51,9 @@ class DetectionPipeline:
             matches.sort(key=lambda m: m.rule_id)
             matches = self.scorer.apply_exceptions(matches, req.path, f.name, now)
             total, block = self.scorer.score(matches)
-            results.append(FieldResult(f, norm, tuple(sorted(cands)), matches, total, block))
-            action = self.scorer.decide(total, block)
+            bt = self.scorer.block_threshold(req.path, f.name)
+            results.append(FieldResult(f, norm, tuple(sorted(cands)), matches, total, block, bt))
+            action = self.scorer.decide(total, block, bt)
             if (_ACTION_RANK[action], total) > (_ACTION_RANK[best_action], best_score):
                 best_action, best_score = action, total
         all_matches = [m for r in results for m in r.matches]

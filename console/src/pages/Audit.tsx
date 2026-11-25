@@ -9,7 +9,7 @@ type Entry = {
 };
 
 const ACTIONS = ["", "auth.login", "auth.login_failed", "auth.account_locked", "event.view", "event.false_positive",
-  "rule.create", "rule.update", "rule.mode", "exception.create", "exception.deactivate", "policy.publish",
+  "rule.create", "rule.update", "rule.mode", "exception.create", "exception.deactivate", "threshold.create", "threshold.deactivate", "policy.publish",
   "policy.publish_rejected", "policy.rollback"];
 
 export default function Audit(_: { ctx: Ctx }) {
