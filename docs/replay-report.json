@@ -1,0 +1,40 @@
+[
+  {
+    "set": "attack",
+    "sent": 2081,
+    "skipped": 0,
+    "status_counts": {
+      "200": 5,
+      "201": 5,
+      "403": 2071
+    },
+    "block_rate": 0.9952,
+    "engine_mismatch": 0,
+    "mismatch_examples": []
+  },
+  {
+    "set": "normal",
+    "sent": 1000,
+    "skipped": 0,
+    "status_counts": {
+      "200": 453,
+      "201": 515,
+      "404": 32
+    },
+    "false_block_rate": 0.0,
+    "engine_mismatch": 0,
+    "mismatch_examples": []
+  },
+  {
+    "set": "normal_hard",
+    "sent": 40,
+    "skipped": 0,
+    "status_counts": {
+      "201": 36,
+      "403": 4
+    },
+    "false_block_rate": 0.1,
+    "engine_mismatch": 0,
+    "mismatch_examples": []
+  }
+]

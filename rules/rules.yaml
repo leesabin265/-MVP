@@ -1,0 +1,372 @@
+# 탐지 룰 — 모든 pattern은 정규화된 텍스트(URL·엔티티 디코딩, NFKC, 소문자, 주석 제거, 공백 1칸)에 적용된다.
+# RE2 문법만 허용(역참조·lookaround 불가). keywords는 Aho-Corasick 프리필터용 소문자 부분 문자열.
+# kind: regex(기본) | analyzer(토큰 분석) | signal(정규화 단계에서 나온 우회 신호)
+version: 1
+threshold: 6
+rules:
+  # ───────────── SQL Injection ─────────────
+  - id: SQLI-001
+    category: SQLI
+    description: 따옴표 탈출 후 항상 참(tautology) 조건
+    keywords: ["or", "and", "||", "&&"]
+    pattern: '[''"`]\s*\)*\s*(or|and|xor|\|\||&&)\s*\(?\s*(([''"`][\w.]*[''"`]|[\w.]+)\s*((=|<>|!=|<=>|<|>)\s*[''"`]?[\w.]*|(like|r?like|regexp)\s*[''"`%]|is\s+(not\s+)?null\b)|true\b|false\b|not\b|\d+\s*(--|#|;|$))'
+    weight: 6
+    mode: BLOCK
+  - id: SQLI-002
+    category: SQLI
+    description: UNION 기반 결과 결합
+    keywords: ["union"]
+    pattern: 'union(\s+(all|distinct))?\s*\(?\s*select\b'
+    weight: 7
+    mode: BLOCK
+  - id: SQLI-003
+    category: SQLI
+    description: 따옴표·괄호 뒤 또는 입력 끝의 SQL 주석 종결자
+    keywords: ["--", "#"]
+    pattern: '([''"`)]\s*(--|#)|--\s*$)'
+    weight: 2
+    mode: BLOCK
+  - id: SQLI-004
+    category: SQLI
+    description: 세미콜론 뒤 다중 쿼리(stacked queries)
+    keywords: [";"]
+    pattern: ';\s*((drop|truncate|alter|create)\s+(table|database|schema|user|procedure|function)\b|delete\s+from\b|insert\s+into\b|update\s+\w+\s+set\b|exec(ute)?\s+(xp_|sp_|master\.|\w+\s*@)|shutdown\b|declare\s+@)'
+    weight: 6
+    mode: BLOCK
+  - id: SQLI-005
+    category: SQLI
+    description: 시간 지연 함수(블라인드 SQLi)
+    keywords: ["sleep", "benchmark", "waitfor"]
+    pattern: '(^|[^\w.])(sleep|pg_sleep|benchmark)\s*\(\s*\d|waitfor\s+delay\s*[''"]'
+    weight: 4
+    mode: BLOCK
+  - id: SQLI-006
+    category: SQLI
+    description: 시스템 카탈로그·메타데이터 테이블 접근
+    keywords: ["information_schema", "sysobjects", "syscolumns", "pg_catalog", "sqlite_master", "mysql.user", "all_tables", "pg_shadow"]
+    pattern: 'information_schema|sysobjects|syscolumns|pg_catalog|sqlite_master|mysql\.user|all_tables|pg_shadow'
+    weight: 5
+    mode: BLOCK
+  - id: SQLI-007
+    category: SQLI
+    description: SELECT … FROM 구문
+    keywords: ["select"]
+    pattern: '\bselect\s+(distinct\s+|top\s+\d+\s+)?[\w*@.,()\s''"`]{1,120}?\s+from\s+[\w.`"\[]'
+    weight: 4
+    mode: BLOCK
+  - id: SQLI-008
+    category: SQLI
+    description: 논리 연산자 뒤 SQL 함수 호출(블라인드·에러 기반)
+    keywords: ["or", "and"]
+    pattern: '\b(or|and|xor)\s+\(?\s*(sleep|pg_sleep|benchmark|extractvalue|updatexml|ascii|substring|substr|mid|length|if|case|exists|char|ord|hex|database|version|user|current_user|rand)\s*\('
+    weight: 4
+    mode: BLOCK
+  - id: SQLI-009
+    category: SQLI
+    description: 파일·명령 실행 및 에러 유도 함수
+    keywords: ["load_file", "outfile", "dumpfile", "xp_cmdshell", "sp_executesql", "utl_http", "dbms_pipe", "extractvalue", "updatexml", "group_concat", "char("]
+    pattern: 'load_file\s*\(|into\s+(out|dump)file\b|xp_cmdshell|sp_executesql|utl_http|dbms_pipe|extractvalue\s*\(|updatexml\s*\(|group_concat\s*\(|char\s*\(\s*\d+\s*(,\s*\d+\s*){2,}\)'
+    weight: 5
+    mode: BLOCK
+  - id: SQLI-010
+    category: SQLI
+    kind: analyzer
+    analyzer: sqli_quote_break
+    description: 토큰 분석 — 따옴표 종료 직후 SQL 키워드·주석·세미콜론
+    keywords: ["'", '"']
+    weight: 4
+    mode: BLOCK
+  - id: SQLI-011
+    category: SQLI
+    description: 따옴표 없는 문맥의 상수 비교 tautology (id=1 or 1=1, 1 or 'a'='a')
+    keywords: ["or", "and"]
+    pattern: '(^|[\w)])\s+(or|and|xor)\s+\(?\s*(\d+\s*(=|<>|!=|<|>)\s*\d+\b|''[^'']{0,20}''\s*(=|<>|!=)\s*''[^'']{0,20}''|"[^"]{0,20}"\s*(=|<>|!=)\s*"[^"]{0,20}")'
+    weight: 6
+    mode: BLOCK
+  - id: SQLI-012
+    category: SQLI
+    description: 컬럼 수 탐색(order by n / group by n)
+    keywords: ["order by", "group by"]
+    pattern: '\b(order|group)\s+by\s+\d+\s*(--|#|;|\)|$)'
+    weight: 2
+    mode: BLOCK
+  - id: SQLI-013
+    category: SQLI
+    description: 긴 16진 리터럴(문자열 우회)
+    keywords: ["0x"]
+    pattern: '\b0x[0-9a-f]{8,}\b'
+    weight: 2
+    mode: BLOCK
+  - id: SQLI-014
+    category: SQLI
+    description: 문자열 연결·형변환을 이용한 우회
+    keywords: ["concat", "cast(", "convert("]
+    pattern: '(concat(_ws)?|cast|convert)\s*\([^)]{0,80}(select|0x[0-9a-f]+|char\s*\(|@@)'
+    weight: 4
+    mode: BLOCK
+  - id: SQLI-015
+    category: SQLI
+    description: DB 환경 변수·버전 조회
+    keywords: ["@@"]
+    pattern: '@@(version|datadir|hostname|basedir|servername|tmpdir)\b'
+    weight: 4
+    mode: BLOCK
+  - id: SQLI-016
+    category: SQLI
+    description: 논리 연산자 뒤 16진 리터럴(참 값 위장)
+    keywords: ["0x"]
+    pattern: '\b(and|or|xor)\s+\(?\s*0x[0-9a-f]{2,}'
+    weight: 4
+    mode: BLOCK
+  - id: SQLI-017
+    category: SQLI
+    description: 괄호 서브쿼리 (select …)
+    keywords: ["select"]
+    pattern: '\(\s*select\s+[\w@*(''"]'
+    weight: 3
+    mode: BLOCK
+  - id: SQLI-018
+    category: SQLI
+    description: CASE WHEN 조건 분기(블라인드 SQLi)
+    keywords: ["case"]
+    pattern: '\bcase\s+when\b.{0,80}?\bthen\b'
+    weight: 3
+    mode: BLOCK
+
+  # ───────────── XSS ─────────────
+  - id: XSS-001
+    category: XSS
+    description: script 태그
+    keywords: ["script"]
+    pattern: '<\s*/?\s*script\b'
+    weight: 7
+    mode: BLOCK
+  - id: XSS-002
+    category: XSS
+    description: 태그 안 이벤트 핸들러 속성
+    keywords: ["on"]
+    pattern: '<[a-z][a-z0-9-]*\b[^>]*[\s/"''`]on[a-z]{3,}\s*='
+    weight: 6
+    mode: BLOCK
+  - id: XSS-003
+    category: XSS
+    description: javascript/vbscript URI (스킴 안 탭·개행 포함 — 브라우저는 무시한다)
+    keywords: ["javascript", "vbscript", "livescript", "href", "src", "action"]
+    pattern: '(href|src|action|formaction|data|xlink:href|background|poster)\s*=\s*[''"`]?\s*(j\s*a\s*v\s*a|v\s*b|l\s*i\s*v\s*e)\s*s\s*c\s*r\s*i\s*p\s*t\s*:'
+    weight: 6
+    mode: BLOCK
+  - id: XSS-004
+    category: XSS
+    description: 외부 리소스·활성 콘텐츠 태그
+    keywords: ["<"]
+    pattern: '<\s*(iframe|object|embed|svg|math|base|link|meta|frame|frameset|applet|form|isindex)\b'
+    weight: 4
+    mode: DETECT
+  - id: XSS-005
+    category: XSS
+    description: 위험한 DOM 싱크·동적 코드 실행
+    keywords: ["document.", "window.", "innerhtml", "outerhtml", "eval", "settimeout", "setinterval", "function", "fromcharcode", "atob"]
+    pattern: 'document\.(cookie|write|domain|location)|window\.(location|name)|\.(inner|outer)html\s*=|\beval\s*\(|set(timeout|interval)\s*\(\s*[''"`]|new\s+function\s*\(|fromcharcode|\batob\s*\('
+    weight: 4
+    mode: BLOCK
+  - id: XSS-006
+    category: XSS
+    description: alert/prompt/confirm 호출(PoC 페이로드)
+    keywords: ["alert", "prompt", "confirm", "print"]
+    pattern: '\b(alert|prompt|confirm|print)\s*(\(|`)'
+    weight: 3
+    mode: BLOCK
+  - id: XSS-007
+    category: XSS
+    description: data URI(HTML·JS)·srcdoc
+    keywords: ["data:", "srcdoc"]
+    pattern: 'data\s*:\s*(text/html|application/(x-)?javascript)|srcdoc\s*='
+    weight: 6
+    mode: BLOCK
+  - id: XSS-008
+    category: XSS
+    description: CSS 기반 스크립트 실행
+    keywords: ["expression", "-moz-binding", "behavior"]
+    pattern: 'expression\s*\(|-moz-binding\s*:|behavior\s*:\s*url'
+    weight: 5
+    mode: BLOCK
+  - id: XSS-009
+    category: XSS
+    description: 속성값 탈출 후 새 태그 시작
+    keywords: [">"]
+    pattern: '[''"`]\s*/?>\s*<\s*/?[a-z]'
+    weight: 2
+    mode: BLOCK
+  - id: XSS-010
+    category: XSS
+    description: 실행 가능 미디어·폼 태그
+    keywords: ["<"]
+    pattern: '<\s*(img|video|audio|source|input|details|body|marquee|select|textarea|keygen|style|image|xss)\b'
+    weight: 2
+    mode: BLOCK
+  - id: XSS-011
+    category: XSS
+    description: 클라이언트 템플릿 인젝션(AngularJS 샌드박스 탈출)
+    keywords: ["{{"]
+    pattern: '\{\{[^}]{0,200}(constructor|\$eval|\$on|__proto__)'
+    weight: 5
+    mode: BLOCK
+  - id: XSS-012
+    category: XSS
+    description: 속성 탈출 후 이벤트 핸들러 주입(태그 없이)
+    keywords: ["on"]
+    pattern: '[''"`]\s*/?[\w\s-]{0,40}?(^|[\s/])on[a-z]{4,}\s*=\s*[''"`]?\s*[a-z_$]'
+    weight: 6
+    mode: BLOCK
+  - id: XSS-014
+    category: XSS
+    description: 속성 밖 javascript/vbscript URI 뒤 함수 호출
+    keywords: ["javascript", "vbscript"]
+    pattern: '(javascript|vbscript)\s*:\s*[a-z_$][\w$.]*\s*[(`]'
+    weight: 4
+    mode: BLOCK
+  - id: XSS-013
+    category: XSS
+    description: 리소스 로드 가로채기(base href, link rel=import, meta refresh)
+    keywords: ["base", "link", "meta"]
+    pattern: '<\s*base\b[^>]*\bhref\s*=|<\s*link\b[^>]*\brel\s*=\s*[''"]?\s*import|<\s*meta\b[^>]*http-equiv\s*=\s*[''"]?\s*refresh[^>]*url\s*='
+    weight: 6
+    mode: BLOCK
+  - id: XSS-016
+    category: XSS
+    description: SVG data URI (스크립트를 품을 수 있음, CSS 배경 용도와 겹쳐 약한 신호)
+    keywords: ["svg+xml"]
+    pattern: 'data\s*:\s*image/svg\+xml'
+    weight: 4
+    mode: BLOCK
+  - id: XSS-015
+    category: XSS
+    description: JS 문자열 탈출 후 연산자·함수 호출 ('-alert(1)-')
+    keywords: ["'", '"', "`"]
+    pattern: '[''"`]\s*[-+*/%^|&;,]\s*[a-z_$][\w$.]*\s*[(`]'
+    weight: 4
+    mode: BLOCK
+
+  # ───────────── 악성 스크립트 ─────────────
+  - id: SCR-001
+    category: SCR
+    description: PHP 코드 태그
+    keywords: ["<?"]
+    pattern: '<\?(php\b|=)'
+    weight: 4
+    mode: BLOCK
+  - id: SCR-002
+    category: SCR
+    description: PHP 명령 실행 함수 + 사용자 입력
+    keywords: ["system", "exec", "passthru", "popen", "proc_open", "assert", "eval"]
+    pattern: '\b(system|exec|shell_exec|passthru|popen|proc_open|assert|eval)\s*\(\s*\$_(get|post|request|cookie|server)'
+    weight: 7
+    mode: BLOCK
+  - id: SCR-003
+    category: SCR
+    kind: signal
+    signal: js_escape
+    description: 난독화된 JS 문자열(\\x·\\u 이스케이프 4개 이상) — 정규화에서 디코딩 후 다른 룰이 본다
+    weight: 3
+    mode: BLOCK
+  - id: SCR-004
+    category: SCR
+    description: 서버 측 명령 실행(Node.js·Java)
+    keywords: ["child_process", "mainmodule", "getruntime", "java.lang.runtime", "processbuilder"]
+    pattern: 'require\s*\(\s*[''"`]child_process|process\.mainmodule|runtime\.getruntime\s*\(\s*\)\s*\.exec|java\.lang\.runtime|new\s+java\.lang\.processbuilder'
+    weight: 7
+    mode: BLOCK
+  - id: SCR-005
+    category: SCR
+    description: JNDI 룩업(Log4Shell, CVE-2021-44228)
+    keywords: ["jndi", "${"]
+    pattern: '\$\{\s*jndi\s*:|\$\{[^}]{0,40}\$\{[^}]{0,40}\}[^}]{0,40}(ndi|ldap|rmi|dns)'
+    weight: 8
+    mode: BLOCK
+  - id: SCR-006
+    category: SCR
+    description: 쿠키·스토리지 외부 유출
+    keywords: ["cookie", "localstorage"]
+    pattern: '(document\.cookie|localstorage)[^;]{0,80}(fetch|xmlhttprequest|new\s+image|\.src\s*=|sendbeacon|location)|(fetch|sendbeacon|new\s+image|location(\.href)?\s*=)[^;]{0,80}(document\.cookie|localstorage)'
+    weight: 6
+    mode: BLOCK
+  - id: SCR-007
+    category: SCR
+    description: 서버 측 템플릿 인젝션(SSTI) 산술 프로브
+    keywords: ["{{", "${", "#{"]
+    pattern: '\{\{\s*\d+\s*\*\s*\d+\s*\}\}|\$\{\s*\d+\s*\*\s*\d+\s*\}|#\{\s*\d+\s*\*\s*\d+\s*\}'
+    weight: 6
+    mode: BLOCK
+  - id: SCR-008
+    category: SCR
+    description: 인코딩된 페이로드를 eval
+    keywords: ["eval", "assert"]
+    pattern: '(eval|assert)\s*\(\s*(base64_decode|gzinflate|gzuncompress|str_rot13|atob|unescape|decodeuricomponent)\s*\('
+    weight: 7
+    mode: BLOCK
+
+  - id: SCR-009
+    category: SCR
+    description: Python 객체 그래프 탐색(SSTI 샌드박스 탈출) — dunder 속성 체인
+    keywords: ["__"]
+    pattern: '__(class|mro|base|bases|subclasses|globals|init|builtins)__\W{1,4}(\w+\W{1,4}){0,3}__(class|mro|base|bases|subclasses|globals|init|builtins|import)__'
+    weight: 6
+    mode: BLOCK
+
+  # ───────────── 우회 신호(정규화 단계) ─────────────
+  - id: ENC-001
+    category: ENC
+    kind: signal
+    signal: excessive_encoding
+    description: URL 디코딩 3회 후에도 인코딩이 남음
+    weight: 6
+    mode: BLOCK
+  - id: ENC-002
+    category: ENC
+    kind: signal
+    signal: multi_encoding
+    description: 다중 URL 인코딩(2회 이상 디코딩)
+    weight: 2
+    mode: BLOCK
+  - id: ENC-003
+    category: ENC
+    kind: signal
+    signal: fullwidth
+    description: 전각·호환 문자로 특수문자 위장(NFKC 후 생성)
+    weight: 2
+    mode: BLOCK
+  - id: ENC-004
+    category: ENC
+    kind: signal
+    signal: comment_obfuscation
+    description: 키워드 사이 인라인 주석·MySQL 버전 주석
+    weight: 2
+    mode: BLOCK
+  - id: ENC-005
+    category: ENC
+    kind: signal
+    signal: control_char
+    description: 널 바이트·제어 문자
+    weight: 2
+    mode: BLOCK
+  - id: ENC-006
+    category: ENC
+    kind: signal
+    signal: html_entity
+    description: HTML 엔티티로 특수문자 위장
+    weight: 1
+    mode: BLOCK
+  - id: ENC-007
+    category: ENC
+    kind: signal
+    signal: mixed_case
+    description: 키워드 대소문자 혼용
+    weight: 1
+    mode: BLOCK
+  - id: ENC-008
+    category: ENC
+    kind: signal
+    signal: duplicate_param
+    description: 같은 파라미터 중복(HTTP Parameter Pollution)
+    weight: 1
+    mode: BLOCK

@@ -1,0 +1,191 @@
+# MPG — 악성 패턴 차단 API 게이트웨이
+# 사전 준비: ./deploy/gen-secrets.sh   (비밀값 + 자체 서명 인증서)
+# 실행:      docker compose up -d --build
+# 외부 공개: gateway(443), admin-console(9443, 허용 IP만). 나머지는 내부 네트워크에만 있다.
+
+x-hardening: &hardening
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "20m", max-file: "5" }
+
+x-app: &app
+  <<: *hardening
+  image: mpg-app:${MPG_VERSION:-0.1.0}
+  build: { context: ., dockerfile: deploy/app.Dockerfile }
+  read_only: true
+  cap_drop: [ALL]
+  tmpfs: ["/tmp:size=64m"]
+
+services:
+  postgres:
+    <<: *hardening
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: mpg
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_superuser_password
+    secrets: [pg_superuser_password, pg_admin_password, pg_gateway_password]
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./deploy/postgres/10-roles.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+      - ./src/mpg/admin/schema.sql:/docker-entrypoint-initdb.d/20-schema.sql:ro
+    networks: [data-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mpg"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    <<: *hardening
+    image: redis:8-alpine
+    command: ["redis-server", "--aclfile", "/run/secrets/redis_users_acl", "--appendonly", "yes",
+              "--maxmemory", "256mb", "--maxmemory-policy", "noeviction", "--save", ""]
+    secrets: [redis_users_acl]
+    volumes: [redisdata:/data]
+    networks: [data-net]
+    healthcheck:
+      test: ["CMD", "redis-cli", "--user", "healthcheck", "--pass", "", "--no-auth-warning", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  init:
+    <<: *app
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - >
+        mpgctl create-admin --id admin --role ADMIN --if-missing < /run/secrets/initial_admin_password &&
+        mpgctl seed-rules /app/rules/rules.yaml
+    environment: &admin-env
+      MPG_DB_HOST: postgres
+      MPG_DB_NAME: mpg
+      MPG_ADMIN_DB_USER: mpg_admin
+      MPG_ADMIN_DB_PASSWORD_FILE: /run/secrets/pg_admin_password
+      MPG_REDIS_HOST: redis
+      MPG_ADMIN_REDIS_USER: mpg-admin
+      MPG_ADMIN_REDIS_PASSWORD_FILE: /run/secrets/redis_admin_password
+      MPG_AUTO_MIGRATE: "false"
+      MPG_TRUSTED_PROXIES: 172.28.20.0/24
+      MPG_ADMIN_ALLOW_CIDRS: ${ADMIN_ALLOW_CIDRS:-127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,::1/128}
+      MPG_ALERT_WEBHOOK: ${ALERT_WEBHOOK:-}
+    secrets: [pg_admin_password, redis_admin_password, initial_admin_password]
+    networks: [data-net]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  admin-api:
+    <<: *app
+    command: ["uvicorn", "--factory", "mpg.admin.app:get_app", "--host", "0.0.0.0", "--port", "8000",
+              "--no-proxy-headers", "--no-server-header", "--no-access-log"]
+    environment: *admin-env
+    secrets: [pg_admin_password, redis_admin_password]
+    networks:
+      data-net: {}
+      mgmt-net: { ipv4_address: 172.28.20.10 }
+    depends_on:
+      init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "mpg-healthcheck", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 4s
+      retries: 10
+    deploy:
+      resources: { limits: { cpus: "1.0", memory: 512m } }
+
+  admin-console:
+    <<: *hardening
+    image: mpg-console:${MPG_VERSION:-0.1.0}
+    build:
+      context: .
+      dockerfile: deploy/console.Dockerfile
+      target: ${CONSOLE_BUILD_TARGET:-from-source}
+    ports: ["${CONSOLE_PORT:-9443}:8443"]
+    secrets: [tls_crt, tls_key]
+    networks: [edge, mgmt-net]
+    depends_on:
+      admin-api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources: { limits: { cpus: "0.5", memory: 128m } }
+
+  gateway:
+    <<: *app
+    command: ["sh", "-c", "rm -rf /tmp/prom && mkdir -p /tmp/prom && exec uvicorn --factory mpg.gateway.app:get_app --host 0.0.0.0 --port 8443 --workers ${GATEWAY_WORKERS:-2} --ssl-certfile /run/secrets/tls_crt --ssl-keyfile /run/secrets/tls_key --no-server-header --no-access-log --timeout-keep-alive 30"]
+    ports: ["${GATEWAY_PORT:-443}:8443"]
+    environment:
+      MPG_BACKEND_URL: http://backend:9000
+      MPG_DB_HOST: postgres
+      MPG_DB_NAME: mpg
+      MPG_GATEWAY_DB_USER: mpg_gateway
+      MPG_GATEWAY_DB_PASSWORD_FILE: /run/secrets/pg_gateway_password
+      MPG_REDIS_HOST: redis
+      MPG_GATEWAY_REDIS_USER: mpg-gateway
+      MPG_GATEWAY_REDIS_PASSWORD_FILE: /run/secrets/redis_gateway_password
+      MPG_POLICY_CACHE: /var/lib/mpg/policy-cache.json
+      MPG_BOOTSTRAP_RULES: /app/rules/rules.yaml
+      MPG_INTERNAL_CIDRS: ${GATEWAY_INTERNAL_CIDRS:-127.0.0.0/8,172.28.30.0/24}
+      PROMETHEUS_MULTIPROC_DIR: /tmp/prom
+    secrets: [pg_gateway_password, redis_gateway_password, tls_crt, tls_key]
+    volumes: [gateway-cache:/var/lib/mpg]
+    networks:
+      edge: {}
+      gw-net: {}
+      data-net: {}
+    depends_on:
+      backend: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "mpg-healthcheck", "https://127.0.0.1:8443/__mpg/health"]
+      interval: 10s
+      timeout: 4s
+      retries: 10
+    deploy:
+      resources: { limits: { cpus: "2.0", memory: 1g } }
+
+  backend:
+    <<: *app
+    command: ["uvicorn", "mpg.demo_backend.app:app", "--host", "0.0.0.0", "--port", "9000", "--no-access-log"]
+    networks: [gw-net]
+    healthcheck:
+      test: ["CMD", "mpg-healthcheck", "http://127.0.0.1:9000/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+networks:
+  edge:
+    ipam: { config: [{ subnet: 172.28.40.0/24 }] }
+  gw-net: { internal: true }
+  data-net:
+    internal: true
+    ipam: { config: [{ subnet: 172.28.30.0/24 }] }
+  mgmt-net:
+    internal: true
+    ipam: { config: [{ subnet: 172.28.20.0/24 }] }
+
+volumes:
+  pgdata: {}
+  redisdata: {}
+  gateway-cache: {}
+
+secrets:
+  pg_superuser_password: { file: ./deploy/secrets/pg_superuser_password }
+  pg_admin_password: { file: ./deploy/secrets/pg_admin_password }
+  pg_gateway_password: { file: ./deploy/secrets/pg_gateway_password }
+  redis_admin_password: { file: ./deploy/secrets/redis_admin_password }
+  redis_gateway_password: { file: ./deploy/secrets/redis_gateway_password }
+  redis_users_acl: { file: ./deploy/secrets/redis_users.acl }
+  initial_admin_password: { file: ./deploy/secrets/initial_admin_password }
+  tls_crt: { file: ./deploy/certs/server.crt }
+  tls_key: { file: ./deploy/certs/server.key }

@@ -1,0 +1,94 @@
+{
+  "policy_version": 1,
+  "attack_total": 2081,
+  "normal_total": 1000,
+  "detection_rate": 1.0,
+  "block_rate": 0.9952,
+  "fp_rate": 0.0,
+  "block_fp_rate": 0.0,
+  "blocked_fp": 0,
+  "detected": 2081,
+  "blocked": 2071,
+  "false_positives": 0,
+  "by_variant": {
+    "raw": {
+      "total": 158,
+      "detected": 158
+    },
+    "url": {
+      "total": 158,
+      "detected": 158
+    },
+    "double-url": {
+      "total": 158,
+      "detected": 158
+    },
+    "mixed-case": {
+      "total": 157,
+      "detected": 157
+    },
+    "comment": {
+      "total": 70,
+      "detected": 70
+    },
+    "plus": {
+      "total": 70,
+      "detected": 70
+    },
+    "fullwidth": {
+      "total": 129,
+      "detected": 129
+    },
+    "tab": {
+      "total": 70,
+      "detected": 70
+    },
+    "newline": {
+      "total": 130,
+      "detected": 130
+    },
+    "unicode-u": {
+      "total": 158,
+      "detected": 158
+    },
+    "url+mixed": {
+      "total": 157,
+      "detected": 157
+    },
+    "double-url+mixed": {
+      "total": 157,
+      "detected": 157
+    },
+    "comment+mixed": {
+      "total": 70,
+      "detected": 70
+    },
+    "versioned-comment": {
+      "total": 70,
+      "detected": 70
+    },
+    "fullwidth+url": {
+      "total": 129,
+      "detected": 129
+    },
+    "entity": {
+      "total": 60,
+      "detected": 60
+    },
+    "entity-dec": {
+      "total": 60,
+      "detected": 60
+    },
+    "entity-hex-nosemi": {
+      "total": 60,
+      "detected": 60
+    },
+    "slash-space": {
+      "total": 60,
+      "detected": 60
+    }
+  },
+  "misses": [],
+  "false_positive_list": [],
+  "elapsed_ms": 203.9
+}

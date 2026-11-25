@@ -1,0 +1,7 @@
+{
+  "version": 7,
+  "publish_api_seconds": 0.221,
+  "first_worker_seconds": 0.017,
+  "all_workers_seconds": 0.004,
+  "polls": 41
+}

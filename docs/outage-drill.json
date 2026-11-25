@@ -1,0 +1,52 @@
+{
+  "db_down": {
+    "attack": {
+      "sent": 300,
+      "blocked": 297,
+      "agree_with_engine": 300,
+      "errors_5xx": 0
+    },
+    "normal": {
+      "sent": 300,
+      "blocked": 0,
+      "agree_with_engine": 300,
+      "errors_5xx": 0
+    },
+    "gateway": {
+      "status": "ok",
+      "policy_version": 8,
+      "policy_source": "db",
+      "last_reload_error": null,
+      "event_buffer": 0,
+      "events_dropped": 0
+    }
+  },
+  "redis_down": {
+    "attack": {
+      "sent": 200,
+      "blocked": 198,
+      "agree_with_engine": 200,
+      "errors_5xx": 0
+    },
+    "gateway_during": {
+      "status": "ok",
+      "policy_version": 8,
+      "policy_source": "db",
+      "last_reload_error": null,
+      "event_buffer": 104,
+      "events_dropped": 0
+    }
+  },
+  "recovery": {
+    "expected_events": 500,
+    "missing": 0,
+    "gateway_after": {
+      "status": "ok",
+      "policy_version": 8,
+      "policy_source": "db",
+      "last_reload_error": null,
+      "event_buffer": 0,
+      "events_dropped": 0
+    }
+  }
+}

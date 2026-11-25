@@ -1,0 +1,40 @@
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "UPDATE users SET name='kim' WHERE id=1; 이 쿼리가 안 먹혀요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "SELECT * FROM orders WHERE status='paid' 결과가 비어 있어요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "where 절에 or 조건을 쓰면 인덱스를 안 타나요? 예: where a=1 or b=2", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "JS에서 document.cookie 로 쿠키 읽는 법 알려주세요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "<img src=\"cat.png\" alt=\"고양이\"> 이미지가 안 보여요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "<a href=\"https://example.com\" target=\"_blank\">링크</a> 새 창 열기", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "onclick=\"save()\" 를 버튼에 달았는데 동작 안 함", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "<button onclick=\"save()\">저장</button> 이 안 눌려요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "React에서 dangerouslySetInnerHTML 써도 되나요?", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "eval() 대신 JSON.parse를 써라", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "Jinja2에서 {{ user.__class__ }} 출력하면 뭐가 나오나요?", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "Python의 __init__ 과 __new__ 차이", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "Bash: for f in *.txt; do echo $f; done", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "Windows 경로 C:\\Users\\kim\\Desktop", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "PowerShell: Get-ChildItem | Where-Object { $_.Length -gt 1kb }", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "Mc'Donald's 버거 맛있어요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "L'Oréal 화장품 할인", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "'오늘'과 '내일' 중 언제 오세요?", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "\"Hello\" or \"Hi\" 둘 중 뭐가 자연스럽나요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "A' and B' are the primes of A and B", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "x' = 2x + 1 미분 결과", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "f'(x) = 0 인 점을 찾으세요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "삭제 -- 취소 -- 다시", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "#include <stdio.h> int main() { printf(\"hi\"); }", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "Spring에서 ${server.port} 값 주입이 안 돼요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "로그에 ${jndi 문자열이 찍혔는데 괜찮나요?", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "sleep(3) 하면 3초 쉬나요 3밀리초 쉬나요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "MySQL에서 SLEEP(5) 함수 용도", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "1 or 2 or 3 개 중에 고르세요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "옵션: A and 1=1 형태의 문법 설명", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "data:image/png;base64,iVBORw0KGgo= 이미지 깨짐", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "<iframe src=\"https://www.youtube.com/embed/abc\"></iframe> 임베드", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "<svg viewBox=\"0 0 24 24\"><path d=\"M0 0h24v24H0z\"/></svg>", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "<script> 태그를 body 끝에 두는 이유?", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "alert() 창 없이 알림 띄우는 법", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "javascript: void(0) 링크는 왜 쓰나요", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "UNION ALL 과 UNION 의 차이", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "Union SELECT 공격이 뭔가요?", "variant": "tech-qna"}
+{"path": "/api/qna/posts", "param": "content", "location": "json", "payload": "information_schema 에서 테이블 목록 조회하는 법", "variant": "tech-qna"}

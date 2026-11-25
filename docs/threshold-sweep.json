@@ -1,0 +1,65 @@
+[
+  {
+    "threshold": 4,
+    "detection": 1.0,
+    "block": 0.9995194617972128,
+    "fp": 0.002,
+    "block_fp": 0.002,
+    "hard_block_fp": 0.275,
+    "hard_any_fp": 0.325
+  },
+  {
+    "threshold": 5,
+    "detection": 1.0,
+    "block": 0.9971167707832773,
+    "fp": 0.0,
+    "block_fp": 0.0,
+    "hard_block_fp": 0.125,
+    "hard_any_fp": 0.175
+  },
+  {
+    "threshold": 6,
+    "detection": 1.0,
+    "block": 0.9947140797693417,
+    "fp": 0.0,
+    "block_fp": 0.0,
+    "hard_block_fp": 0.1,
+    "hard_any_fp": 0.15
+  },
+  {
+    "threshold": 7,
+    "detection": 0.8683325324363287,
+    "block": 0.8558385391638635,
+    "fp": 0.0,
+    "block_fp": 0.0,
+    "hard_block_fp": 0.05,
+    "hard_any_fp": 0.05
+  },
+  {
+    "threshold": 8,
+    "detection": 0.8255646323882748,
+    "block": 0.8097068716962998,
+    "fp": 0.0,
+    "block_fp": 0.0,
+    "hard_block_fp": 0.0,
+    "hard_any_fp": 0.0
+  },
+  {
+    "threshold": 9,
+    "detection": 0.6804420951465642,
+    "block": 0.6631427198462277,
+    "fp": 0.0,
+    "block_fp": 0.0,
+    "hard_block_fp": 0.0,
+    "hard_any_fp": 0.0
+  },
+  {
+    "threshold": 10,
+    "detection": 0.6237385872176838,
+    "block": 0.5992311388755406,
+    "fp": 0.0,
+    "block_fp": 0.0,
+    "hard_block_fp": 0.0,
+    "hard_any_fp": 0.0
+  }
+]
