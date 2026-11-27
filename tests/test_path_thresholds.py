@@ -44,6 +44,7 @@ def test_most_specific_rule_wins():
 
 
 def test_raised_threshold_logs_instead_of_blocking(policy):
+    policy = replace(policy, path_thresholds=())
     pipe = with_pt(policy, PathThreshold(QNA, 8, param="content"))
     v = pipe.inspect(req(QNA, "content", "<script> 태그를 body 끝에 두는 이유?"))
     assert v.action is Action.DETECT_ONLY
@@ -60,6 +61,7 @@ def test_raised_threshold_logs_instead_of_blocking(policy):
 
 
 def test_lowered_threshold_is_stricter(policy):
+    policy = replace(policy, path_thresholds=())
     pipe = with_pt(policy, PathThreshold("/api/login", 4, param="username"))
     v = pipe.inspect(req("/api/login", "username", "1 and sleep(1)", Location.QUERY))
     assert v.risk_score >= 4
@@ -101,7 +103,12 @@ def test_snapshot_round_trip(policy):
     assert back.path_thresholds == p.path_thresholds
 
 
+def test_rules_file_ships_board_threshold(policy):
+    assert PathThreshold("/api/qna/posts", 8, "content") in policy.path_thresholds
+
+
 def test_board_threshold_removes_hard_false_positives_without_losing_detection(policy):
+    policy = replace(policy, path_thresholds=())
     attacks = load_samples(ROOT / "datasets" / "attack.jsonl")
     normals = load_samples(ROOT / "datasets" / "normal.jsonl")
     hard = load_samples(ROOT / "datasets" / "normal_hard.jsonl")

@@ -195,7 +195,7 @@ def test_session_cookie_flags():
 
 
 def test_path_threshold_flow(gw, admin, op):
-    body = {"path": "/api/qna/posts", "param": "content", "threshold": 8, "reason": "기술 Q&A 게시판 오탐 완화"}
+    body = {"path": "/api/feedback", "param": "message", "threshold": 8, "reason": "피드백 본문 오탐 완화(e2e)"}
     assert op.send("POST", "/thresholds", json=body).status_code == 403, "OPERATOR는 임계값을 바꿀 수 없다"
     r = admin.send("POST", "/thresholds", json=body)
     assert r.status_code == 201, r.text
@@ -204,25 +204,32 @@ def test_path_threshold_flow(gw, admin, op):
     assert admin.send("POST", "/thresholds", json={**body, "threshold": 11}).status_code == 400
 
     t = admin.send("POST", "/policy/test", json={}).json()
-    assert t["passed"] and any(w.startswith("block_rate_dropped") for w in t["warnings"])
-    pub = admin.send("POST", "/policy/publish", json={"comment": "board threshold"})
+    assert t["passed"], t
+    pub = admin.send("POST", "/policy/publish", json={"comment": "feedback threshold"})
     assert pub.status_code == 201, pub.text
     wait_gateway_version(gw, pub.json()["version"])
 
-    question = gw.post("/api/qna/posts", json={"title": "질문", "content": "<script> 태그를 body 끝에 두는 이유?"})
-    assert question.status_code == 201
+    question = gw.post("/api/feedback", json={"message": "<script> 태그를 body 끝에 두는 이유?"})
+    assert question.status_code == 200
     assert wait_event(admin, question.headers["x-request-id"])["action"] == "DETECT_ONLY"
-    assert gw.post("/api/qna/posts", json={"title": "q", "content": "<script>alert(document.cookie)</script>"}).status_code == 403
-    assert gw.post("/api/qna/posts", json={"title": "<script> 태그를 body 끝에 두는 이유?", "content": "x"}).status_code == 403
+    assert gw.post("/api/feedback", json={"message": "<script>alert(document.cookie)</script>"}).status_code == 403
 
     sb = admin.send("POST", "/policy/test", json={"value": "<script> 태그", "location": "json",
-                                                  "path": "/api/qna/posts", "param": "content", "use": "active"}).json()
+                                                  "path": "/api/feedback", "param": "message", "use": "active"}).json()
     assert (sb["threshold"], sb["detect_threshold"], sb["action"]) == (8, 6, "DETECT_ONLY")
 
     assert admin.send("DELETE", f"/thresholds/{tid}").status_code == 200
-    v = admin.send("POST", "/policy/publish", json={"comment": "remove board threshold"}).json()["version"]
+    v = admin.send("POST", "/policy/publish", json={"comment": "remove feedback threshold"}).json()["version"]
     wait_gateway_version(gw, v)
-    assert gw.post("/api/qna/posts", json={"title": "질문", "content": "<script> 태그를 body 끝에 두는 이유?"}).status_code == 403
+    assert gw.post("/api/feedback", json={"message": "<script> 태그를 body 끝에 두는 이유?"}).status_code == 403
+
+
+def test_board_threshold_is_active(gw, admin):
+    items = admin.get("/thresholds").json()["items"]
+    assert any(t["path"] == "/api/qna/posts" and t["param"] == "content" and t["threshold"] == 8
+               and t["published"] for t in items)
+    r = gw.post("/api/qna/posts", json={"title": "질문", "content": "<script> 태그를 body 끝에 두는 이유?"})
+    assert r.status_code == 201
 
 
 def test_rollback_and_audit(gw, admin):

@@ -3,6 +3,15 @@
 # kind: regex(기본) | analyzer(토큰 분석) | signal(정규화 단계에서 나온 우회 신호)
 version: 1
 threshold: 6
+
+# 경로(·파라미터)별 차단 임계값. 탐지 임계값은 전역 threshold 그대로라 사이 점수는 DETECT_ONLY로 기록된다.
+# 근거: docs/report.md 4장 "경로별 차단 임계값" — 8이면 기술 Q&A 차단 오탐 4/40 → 0/40, 탐지율 100% 유지.
+path_thresholds:
+  - path: /api/qna/posts
+    param: content
+    threshold: 8
+    reason: 기술 Q&A 게시판 본문 오탐 완화 (임계값 스윕 근거, docs/report.md 4장)
+
 rules:
   # ───────────── SQL Injection ─────────────
   - id: SQLI-001

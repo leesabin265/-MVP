@@ -14,18 +14,26 @@
 관리자 ──HTTPS 9443(허용 IP)──▶ admin-console(nginx) ──▶ admin-api (mgmt-net, 내부)
 ```
 
-## 빠른 시작
+## 로컬 서버로 실행
+
+필요한 것: Docker Desktop(macOS·Windows) 또는 Docker Engine + Compose v2(Linux), git, openssl.
+Windows는 WSL2 또는 Git Bash에서 실행한다. Apple Silicon(arm64)도 그대로 빌드된다.
 
 ```bash
-./deploy/gen-secrets.sh
+git clone https://github.com/leesabin265/-mvp.git mpg && cd mpg
 ```
 
 ```bash
-docker compose up -d --build
+./deploy/local-up.sh
 ```
 
-- 게이트웨이: `https://localhost/` (뒤에 데모 백엔드). 자체 서명 인증서라 `curl -k`.
+처음 실행하면 비밀값·자체 서명 인증서를 만들고, 이미지를 빌드하고(몇 분), 관리자 계정과 룰(게시판 차단 임계값 8 포함)을 넣어 v1을 발행한 뒤,
+정상 요청 200 / 공격 요청 403 을 직접 확인하고 접속 정보를 출력한다.
+
+- 게이트웨이: `https://localhost/` (뒤에 데모 백엔드). 자체 서명 인증서라 브라우저 경고가 뜨고, curl은 `-k`.
 - 관리자 콘솔: `https://localhost:9443/` — 아이디 `admin`, 비밀번호는 `deploy/secrets/initial_admin_password`.
+- 443 포트가 이미 쓰이면: `GATEWAY_PORT=8443 ./deploy/local-up.sh`
+- 중지(데이터 유지): `./deploy/local-up.sh stop` · 데이터까지 삭제: `./deploy/local-up.sh reset`
 - 계정 추가: `docker compose exec -T admin-api mpgctl create-admin --id op1 --role OPERATOR` (비밀번호는 표준 입력)
 
 ```bash
@@ -33,7 +41,7 @@ curl -k "https://localhost/api/login?username=admin%2527%20OR%201%3D1--"
 ```
 
 npm·PyPI에 닿지 않는 환경: 호스트에서 `pip wheel '.[server]' -w deploy/wheels` 와 `cd console && npm ci && npm run build` 를 한 뒤
-`CONSOLE_BUILD_TARGET=prebuilt docker compose up -d --build`.
+`CONSOLE_BUILD_TARGET=prebuilt ./deploy/local-up.sh`.
 
 ## 구성
 

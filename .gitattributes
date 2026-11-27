@@ -1,0 +1,5 @@
+*.sh text eol=lf
+*.acl text eol=lf
+deploy/nginx/*.conf text eol=lf
+src/mpg/admin/schema.sql text eol=lf
+*.png binary

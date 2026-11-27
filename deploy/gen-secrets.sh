@@ -20,9 +20,24 @@ user mpg-gateway on >$GW resetkeys ~gateway.events ~gateway:stats:* resetchannel
 user mpg-admin on >$AD resetkeys ~gateway.events ~gateway:stats:* ~sess:* ~loginfail:* resetchannels &policy.updated +@all -@admin -@dangerous +info
 ACL
 if [ ! -s certs/server.key ]; then
-  openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 90 \
-    -keyout certs/server.key -out certs/server.crt -subj "/CN=localhost" \
-    -addext "subjectAltName=DNS:localhost,DNS:gateway,IP:127.0.0.1" 2>/dev/null
+  # OpenSSL·LibreSSL(macOS 기본) 모두에서 되도록 RSA + 설정 파일 방식으로 SAN을 넣는다.
+  cnf=$(mktemp)
+  cat > "$cnf" <<CNF
+[req]
+distinguished_name = dn
+x509_extensions = ext
+prompt = no
+[dn]
+CN = localhost
+[ext]
+subjectAltName = DNS:localhost,DNS:gateway,IP:127.0.0.1
+basicConstraints = critical,CA:FALSE
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = serverAuth
+CNF
+  openssl req -x509 -newkey rsa:2048 -nodes -days 90 -keyout certs/server.key -out certs/server.crt \
+    -config "$cnf" 2>/dev/null
+  rm -f "$cnf"
 fi
 # 컨테이너는 비루트(uid 10001)로 돌기 때문에 파일은 읽기 가능하게, 디렉터리는 소유자만 들어갈 수 있게 둔다.
 chmod 644 secrets/* certs/*
