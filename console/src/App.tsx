@@ -10,8 +10,9 @@ import Thresholds from "./pages/Thresholds";
 import Policy from "./pages/Policy";
 import Sandbox from "./pages/Sandbox";
 import Audit from "./pages/Audit";
+import Classroom from "./pages/Classroom";
 
-type Tab = "dashboard" | "events" | "rules" | "exceptions" | "thresholds" | "policy" | "sandbox" | "audit";
+type Tab = "dashboard" | "events" | "rules" | "exceptions" | "thresholds" | "policy" | "sandbox" | "audit" | "classroom";
 const TABS: { id: Tab; label: string; need?: "OPERATOR" | "ADMIN" }[] = [
   { id: "dashboard", label: "대시보드" },
   { id: "events", label: "탐지 로그" },
@@ -21,6 +22,7 @@ const TABS: { id: Tab; label: string; need?: "OPERATOR" | "ADMIN" }[] = [
   { id: "policy", label: "정책 버전" },
   { id: "sandbox", label: "샌드박스", need: "OPERATOR" },
   { id: "audit", label: "감사 기록", need: "ADMIN" },
+  { id: "classroom", label: "수업 참여", need: "OPERATOR" },
 ];
 
 export type Ctx = {
@@ -136,6 +138,7 @@ export default function App() {
         {tab === "policy" && <Policy ctx={ctx} />}
         {tab === "sandbox" && <Sandbox ctx={ctx} />}
         {tab === "audit" && <Audit ctx={ctx} />}
+        {tab === "classroom" && <Classroom ctx={ctx} />}
       </main>
       <Toasts toasts={toasts} />
     </div>

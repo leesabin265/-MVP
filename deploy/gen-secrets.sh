@@ -9,7 +9,7 @@ chmod 700 secrets certs
 # Windows의 openssl은 줄 끝이 CRLF라 \r까지 지운다(전에는 \r이 비밀번호에 섞일 수 있었다).
 gen() { [ -s "secrets/$1" ] || openssl rand -base64 33 | tr -d '/+=\r\n' | head -c 40 > "secrets/$1"; }
 for s in pg_superuser_password pg_admin_password pg_gateway_password \
-         redis_admin_password redis_gateway_password initial_admin_password; do
+         redis_admin_password redis_gateway_password initial_admin_password class_presenter_key; do
   gen "$s"
 done
 GW=$(cat secrets/redis_gateway_password)

@@ -111,8 +111,13 @@ services:
     command: ["uvicorn", "--factory", "mpg.admin.app:get_app", "--host", "0.0.0.0", "--port", "8443",
               "--ssl-certfile", "/run/secrets/admin_api_tls_crt", "--ssl-keyfile", "/run/secrets/admin_api_tls_key",
               "--no-proxy-headers", "--no-server-header", "--no-access-log"]
-    environment: *admin-env
-    secrets: [pg_admin_password, redis_admin_password, internal_ca, admin_api_tls_crt, admin_api_tls_key]
+    environment:
+      <<: *admin-env
+      # 콘솔 '수업 참여' 탭 → admin-api → classroom(발표자 키는 서버끼리만 쓴다)
+      MPG_CLASSROOM_URL: http://classroom:8080
+      MPG_CLASS_PRESENTER_KEY_FILE: /run/secrets/class_presenter_key
+    secrets: [pg_admin_password, redis_admin_password, internal_ca, admin_api_tls_crt, admin_api_tls_key,
+              class_presenter_key]
     networks:
       data-net: {}
       mgmt-net: { ipv4_address: 172.28.20.10 }
@@ -223,6 +228,30 @@ services:
       timeout: 3s
       retries: 10
 
+  # 수업 발표용 실시간 참여(예측 투표·우회 챌린지). 기본으로는 뜨지 않는다: ./deploy/class-up.sh
+  # 학생 입력은 edge-lb(게이트웨이)로만 보낸다. HTTP 8080은 같은 Wi-Fi의 학생 휴대폰용이라 발표가 끝나면 내린다.
+  classroom:
+    <<: *app
+    profiles: [class]
+    command: ["uvicorn", "mpg.classroom.app:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1",
+              "--no-server-header", "--no-access-log"]
+    ports: ["${CLASS_PORT:-8080}:8080"]
+    environment:
+      MPG_CLASS_URL: ${MPG_CLASS_URL:-http://localhost:8080/}
+      MPG_CLASS_GATEWAY: https://edge-lb:8443
+      MPG_CLASS_PRESENTER_KEY_FILE: /run/secrets/class_presenter_key
+    secrets: [class_presenter_key]
+    networks: [edge, mgmt-net]  # mgmt-net: admin-api(콘솔 '수업 참여' 탭)에서 발표자 기능을 부른다
+    depends_on:
+      edge-lb: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "mpg-healthcheck", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources: { limits: { cpus: "1.0", memory: 256m } }
+
 networks:
   edge:
     ipam: { config: [{ subnet: 172.28.40.0/24 }] }
@@ -264,3 +293,4 @@ secrets:
   pg_tls_key: { file: ./deploy/certs/postgres.key }
   redis_tls_crt: { file: ./deploy/certs/redis.crt }
   redis_tls_key: { file: ./deploy/certs/redis.key }
+  class_presenter_key: { file: ./deploy/secrets/class_presenter_key }
