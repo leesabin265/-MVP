@@ -42,25 +42,6 @@ def _presenter_key() -> str:
 
 PRESENTER_KEY = _presenter_key()
 
-# 예측 투표 문제. 정답은 미리 적지 않는다 — '공개' 를 누를 때 실제 게이트웨이에 보내 그 자리에서 판정한다.
-QUIZ = [
-    {"id": "q1", "title": "로그인 아이디 칸에 이걸 넣으면?",
-     "shown": "admin%2527%20OR%201%3D1--",
-     "hint": "%25는 '%'를 한 번 더 인코딩한 것 — 두 번 풀어야 정체가 보입니다",
-     "method": "GET", "target": "login", "raw": True,
-     "explain": "URL 디코딩을 두 번 하면 admin' OR 1=1-- (항상 참 조건). 정규화가 풀어서 잡습니다."},
-    {"id": "q2", "title": "기술 Q&A 게시판에 이런 질문을 올리면?",
-     "shown": "Union SELECT 공격이 뭔가요?",
-     "hint": "공격 문법을 '설명' 하는 정상 질문입니다",
-     "method": "POST", "target": "board", "raw": False,
-     "explain": "게시판 본문은 차단 기준을 8로 올려 두어 정상 질문은 통과시키고 기록만 합니다(오탐 줄이기)."},
-    {"id": "q3", "title": "핑 도구의 호스트 칸에 이걸 넣으면?",
-     "shown": "cat /etc/pa[s]swd",
-     "hint": "[s] 는 셸에서 's' 한 글자와 같습니다(글롭)",
-     "method": "GET", "target": "ping", "raw": False,
-     "explain": "현재 룰은 이 우회 기법을 모릅니다 — 직접 만든 데이터에 없던 기법이라 놓친 사례입니다."},
-]
-
 TARGETS = {
     "login": {"label": "로그인 아이디", "method": "GET", "path": "/api/login", "param": "username"},
     "search": {"label": "상품 검색", "method": "GET", "path": "/api/search", "param": "q"},
@@ -151,11 +132,8 @@ class Submission:
 
 @dataclass
 class State:
-    phase: str = "lobby"  # lobby | vote | reveal | challenge | end
-    q: int = 0
+    phase: str = "lobby"  # lobby | challenge | end
     students: dict[str, Student] = field(default_factory=dict)
-    votes: dict[str, dict[str, str]] = field(default_factory=lambda: {q["id"]: {} for q in QUIZ})
-    results: dict[str, dict] = field(default_factory=dict)
     submissions: list[Submission] = field(default_factory=list)
     version: int = 0
 
@@ -217,10 +195,6 @@ class JoinIn(BaseModel):
     nick: str = PField(min_length=1, max_length=12)
 
 
-class VoteIn(BaseModel):
-    choice: str = PField(pattern="^(block|pass)$")
-
-
 class SubmitIn(BaseModel):
     attack: str = PField(pattern="^(login|script|command)$")
     disguises: list[str] = PField(default_factory=list, max_length=5)
@@ -272,12 +246,6 @@ CARDS = {
 def public_state(s: Student | None) -> dict:
     out = {"phase": st.phase, "version": st.version, "joined": s is not None,
            "nick": s.nick if s else None}
-    if st.phase in ("vote", "reveal"):
-        q = QUIZ[st.q]
-        out["question"] = {k: q[k] for k in ("id", "title", "shown", "hint")}
-        out["my_vote"] = st.votes[q["id"]].get(s.sid) if s else None
-        if st.phase == "reveal" and q["id"] in st.results:
-            out["result"] = {**st.results[q["id"]], "explain": q["explain"]}
     if st.phase == "challenge" and s:
         out["cards"] = CARDS
         out["cracked"] = sorted(s.cracked)
@@ -291,17 +259,6 @@ def public_state(s: Student | None) -> dict:
 async def state(request: Request):
     s = st.students.get(request.cookies.get("mpg_class") or "")
     return public_state(s)
-
-
-@app.post("/api/vote")
-async def vote(body: VoteIn, request: Request):
-    s = student_of(request)
-    if st.phase != "vote":
-        raise HTTPException(409, "지금은 투표 시간이 아닙니다")
-    async with lock:
-        st.votes[QUIZ[st.q]["id"]][s.sid] = body.choice
-        st.version += 1
-    return {"ok": True}
 
 
 @app.post("/api/submit")
@@ -379,14 +336,8 @@ def disguise_wins() -> list[dict]:
 @app.get("/api/presenter/state")
 async def presenter_state(request: Request):
     require_presenter(request)
-    out = {"phase": st.phase, "q": st.q, "quiz_len": len(QUIZ), "url": PUBLIC_URL,
+    out = {"phase": st.phase, "url": PUBLIC_URL,
            "students": len(st.students), "version": st.version}
-    if st.phase in ("vote", "reveal"):
-        q = QUIZ[st.q]
-        votes = list(st.votes[q["id"]].values())
-        out["question"] = {k: q[k] for k in ("id", "title", "shown", "hint", "explain")}
-        out["votes"] = {"block": votes.count("block"), "pass": votes.count("pass")}
-        out["result"] = st.results.get(q["id"])
     subs = st.submissions
     # 공격별로 몇 명이 뚫었는지(처음 뚫은 요청 ID도 — 발표자가 로그로 넘어갈 수 있게)
     cracks = {}
@@ -407,25 +358,16 @@ async def presenter_state(request: Request):
 
 
 class PhaseIn(BaseModel):
-    phase: str = PField(pattern="^(lobby|vote|reveal|challenge|end)$")
-    q: int | None = PField(default=None, ge=0)
+    phase: str = PField(pattern="^(lobby|challenge|end)$")
 
 
 @app.post("/api/presenter/phase")
 async def set_phase(body: PhaseIn, request: Request):
     require_presenter(request)
-    if body.q is not None and body.q >= len(QUIZ):
-        raise HTTPException(400, "no such question")
-    if body.phase == "reveal":
-        q = QUIZ[st.q if body.q is None else body.q]
-        status, rid = await send_to_gateway(q["target"], q["shown"], q["raw"])
-        st.results[q["id"]] = {"status": status, "blocked": is_blocked(status), "request_id": rid}
     async with lock:
         st.phase = body.phase
-        if body.q is not None:
-            st.q = body.q
         st.version += 1
-    return {"phase": st.phase, "q": st.q, "result": st.results.get(QUIZ[st.q]["id"])}
+    return {"phase": st.phase}
 
 
 @app.post("/api/presenter/reset")

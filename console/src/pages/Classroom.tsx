@@ -10,14 +10,9 @@ type Crack = { label: string; count: number; request_id: string };
 type Recent = { nick: string; attack: string; payload: string; blocked: boolean; disguises: string[] };
 type Board = { nick: string; cracked: number; attacks: string[] };
 type State = {
-  phase: "lobby" | "vote" | "reveal" | "challenge" | "end";
-  q: number;
-  quiz_len: number;
+  phase: "lobby" | "challenge" | "end";
   url: string;
   students: number;
-  question?: { id: string; title: string; shown: string; hint: string; explain: string };
-  votes?: { block: number; pass: number };
-  result?: { status: number; blocked: boolean; request_id: string } | null;
   challenge: {
     total: number; blocked: number; passed: number;
     cracks: Record<string, Crack>;
@@ -59,7 +54,7 @@ export default function Classroom({ ctx }: { ctx: Ctx }) {
       setBusy(false);
     }
   };
-  const phase = (p: State["phase"], q?: number) => act("/class/phase", q === undefined ? { phase: p } : { phase: p, q });
+  const phase = (p: State["phase"]) => act("/class/phase", { phase: p });
 
   if (err && !s) {
     const down = err instanceof ApiError && err.status === 503;
@@ -80,7 +75,6 @@ export default function Classroom({ ctx }: { ctx: Ctx }) {
   if (!s) return <p className="muted">불러오는 중…</p>;
 
   const on = (cond: boolean) => (cond ? "btn small primary" : "btn small");
-  const quizActive = s.phase === "vote" || s.phase === "reveal";
 
   return (
     <div className="stack cls">
@@ -88,22 +82,12 @@ export default function Classroom({ ctx }: { ctx: Ctx }) {
         <span className="cls-count">참여 {s.students}명</span>
         <div className="cls-controls">
           <button className={on(s.phase === "lobby")} disabled={busy} onClick={() => phase("lobby")}>대기(QR)</button>
-          {Array.from({ length: s.quiz_len }, (_, i) => (
-            <span key={i} className="cls-pair">
-              <button className={on(quizActive && s.q === i && s.phase === "vote")} disabled={busy} onClick={() => phase("vote", i)}>
-                Q{i + 1} 투표
-              </button>
-              <button className={on(quizActive && s.q === i && s.phase === "reveal")} disabled={busy} onClick={() => phase("reveal", i)}>
-                Q{i + 1} 공개
-              </button>
-            </span>
-          ))}
-          <button className={on(s.phase === "challenge")} disabled={busy} onClick={() => phase("challenge")}>챌린지</button>
+          <button className={on(s.phase === "challenge")} disabled={busy} onClick={() => phase("challenge")}>챌린지 시작</button>
           <button className={on(s.phase === "end")} disabled={busy} onClick={() => phase("end")}>종료</button>
           <button
             className="btn small"
             disabled={busy}
-            onClick={() => confirm("참여자·투표·챌린지 기록을 모두 지울까요?") && act("/class/reset")}
+            onClick={() => confirm("참여자·챌린지 기록을 모두 지울까요?") && act("/class/reset")}
           >
             초기화
           </button>
@@ -115,31 +99,7 @@ export default function Classroom({ ctx }: { ctx: Ctx }) {
           <h1>휴대폰으로 접속하세요</h1>
           <img className="cls-qr" src={`/admin/api/class/qr.svg?u=${encodeURIComponent(s.url)}`} alt="학생 접속 QR 코드" />
           <p className="cls-url">{s.url}</p>
-          <p className="muted small">학생 휴대폰은 이 PC와 같은 Wi-Fi에 있어야 합니다.</p>
-        </div>
-      )}
-
-      {quizActive && s.question && s.votes && (
-        <div className="card stack">
-          <span className="badge">예측 투표 {s.q + 1} / {s.quiz_len}</span>
-          <h1 className="cls-title">{s.question.title}</h1>
-          <pre className="cls-payload">{s.question.shown}</pre>
-          <p className="muted">{s.question.hint}</p>
-          <VoteBar label="🛡️ 막힌다" n={s.votes.block} total={s.votes.block + s.votes.pass} kind="block" />
-          <VoteBar label="🚪 통과한다" n={s.votes.pass} total={s.votes.block + s.votes.pass} kind="pass" />
-          {s.phase === "reveal" && s.result && (
-            <>
-              <div className={s.result.blocked ? "cls-result block" : "cls-result pass"}>
-                {s.result.blocked ? "🛡️ 막혔습니다" : "🚪 통과했습니다"} (HTTP {s.result.status})
-              </div>
-              <p className="cls-explain">{s.question.explain}</p>
-              {s.result.request_id && (
-                <button className="btn small" onClick={() => ctx.openEvent(s.result!.request_id)}>
-                  탐지 로그에서 이 요청 보기
-                </button>
-              )}
-            </>
-          )}
+          <p className="muted small">학생 휴대폰은 이 PC와 같은 Wi-Fi에 있어야 합니다. 챌린지를 시작하면 학생 화면이 바뀝니다.</p>
         </div>
       )}
 
@@ -202,18 +162,6 @@ export default function Classroom({ ctx }: { ctx: Ctx }) {
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-function VoteBar({ label, n, total, kind }: { label: string; n: number; total: number; kind: "block" | "pass" }) {
-  return (
-    <div className="cls-barrow">
-      <span>{label}</span>
-      <div className="cls-track">
-        <div className={`cls-fill ${kind}`} style={{ width: `${total ? (100 * n) / total : 0}%` }} />
-      </div>
-      <b>{n}</b>
     </div>
   );
 }

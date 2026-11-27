@@ -33,13 +33,7 @@ def test_full_flow(monkeypatch):
 
     assert c.post("/api/join", json={"nick": "학생1"}).status_code == 200
     assert c.post("/api/submit", json={"attack": "login"}).status_code == 409  # 아직 대기 단계
-
-    # 예측 투표
-    c.post("/api/presenter/phase", json={"phase": "vote", "q": 0}, headers=KEY)
-    assert c.post("/api/vote", json={"choice": "block"}).status_code == 200
-    r = c.post("/api/presenter/phase", json={"phase": "reveal", "q": 0}, headers=KEY).json()
-    assert r["result"]["blocked"] is True
-    assert c.get("/api/state").json()["result"]["blocked"]
+    assert c.post("/api/presenter/phase", json={"phase": "vote"}, headers=KEY).status_code == 422  # 투표 단계 없음
 
     # 변장 챌린지
     c.post("/api/presenter/phase", json={"phase": "challenge"}, headers=KEY)

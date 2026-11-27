@@ -30,19 +30,14 @@ function btn(label, onClick, cls) {
 function buildControls(s) {
   const nav = $("controls");
   nav.replaceChildren();
-  const phase = (p, q) => () => api("/api/presenter/phase", q === undefined ? { phase: p } : { phase: p, q });
+  const phase = (p) => () => api("/api/presenter/phase", { phase: p });
   nav.append(btn("대기(QR)", phase("lobby"), s.phase === "lobby" ? "on" : ""));
-  for (let i = 0; i < s.quiz_len; i++) {
-    const active = (s.phase === "vote" || s.phase === "reveal") && s.q === i;
-    nav.append(btn("Q" + (i + 1) + " 투표", phase("vote", i), active && s.phase === "vote" ? "on" : ""));
-    nav.append(btn("Q" + (i + 1) + " 공개", phase("reveal", i), active && s.phase === "reveal" ? "on" : ""));
-  }
-  nav.append(btn("챌린지", phase("challenge"), s.phase === "challenge" ? "on" : ""));
+  nav.append(btn("챌린지 시작", phase("challenge"), s.phase === "challenge" ? "on" : ""));
   nav.append(btn("종료", phase("end"), s.phase === "end" ? "on" : ""));
 }
 
 function show(name) {
-  for (const v of ["lobby", "quiz", "challenge", "end"]) $("p-" + v).hidden = v !== name;
+  for (const v of ["lobby", "challenge", "end"]) $("p-" + v).hidden = v !== name;
 }
 
 function fillBoard(el, rows) {
@@ -62,33 +57,12 @@ function fillBoard(el, rows) {
 
 function render(s) {
   $("count").textContent = "참여 " + s.students + "명";
-  if (!S || S.phase !== s.phase || S.q !== s.q) buildControls(s);
+  if (!S || S.phase !== s.phase) buildControls(s);
   S = s;
   if (s.phase === "lobby") {
     if (!$("qr").src) $("qr").src = "/api/presenter/qr.svg?key=" + encodeURIComponent(KEY);
     $("url").textContent = s.url;
     return show("lobby");
-  }
-  if (s.phase === "vote" || s.phase === "reveal") {
-    const q = s.question;
-    $("quiz-tag").textContent = "예측 투표 " + (s.q + 1) + " / " + s.quiz_len;
-    $("quiz-title").textContent = q.title;
-    $("quiz-shown").textContent = q.shown;
-    $("quiz-hint").textContent = q.hint;
-    const total = Math.max(1, s.votes.block + s.votes.pass);
-    $("bar-block").style.width = (100 * s.votes.block / total) + "%";
-    $("bar-pass").style.width = (100 * s.votes.pass / total) + "%";
-    $("n-block").textContent = s.votes.block;
-    $("n-pass").textContent = s.votes.pass;
-    const showRes = s.phase === "reveal" && s.result;
-    $("quiz-result").hidden = !showRes;
-    $("quiz-explain").hidden = !showRes;
-    if (showRes) {
-      $("quiz-result").textContent = (s.result.blocked ? "🛡️ 막혔습니다" : "🚪 통과했습니다") + "  (HTTP " + s.result.status + ")";
-      $("quiz-result").className = "badge-big " + (s.result.blocked ? "block" : "pass");
-      $("quiz-explain").textContent = q.explain;
-    }
-    return show("quiz");
   }
   if (s.phase === "challenge") {
     const c = s.challenge;

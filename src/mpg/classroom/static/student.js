@@ -2,7 +2,7 @@
 // 사용자 입력·서버 값은 모두 textContent로만 넣는다(공격 문자열이 그대로 오가므로).
 "use strict";
 const $ = (id) => document.getElementById(id);
-const views = ["join", "lobby", "vote", "reveal", "challenge", "end"];
+const views = ["join", "lobby", "challenge", "end"];
 let last = null;
 let cardsFilled = false;
 let pickedAttack = null;
@@ -29,28 +29,6 @@ function render(s) {
   if (!s.joined) return show("join");
   if (s.phase === "lobby") return show("lobby");
   if (s.phase === "end") return show("end");
-  if (s.phase === "vote") {
-    $("q-title").textContent = s.question.title;
-    $("q-shown").textContent = s.question.shown;
-    $("q-hint").textContent = s.question.hint;
-    $("vote-block").classList.toggle("picked", s.my_vote === "block");
-    $("vote-pass").classList.toggle("picked", s.my_vote === "pass");
-    $("vote-msg").textContent = s.my_vote ? "투표했어요. 바꿀 수도 있어요." : "";
-    return show("vote");
-  }
-  if (s.phase === "reveal") {
-    $("r-title").textContent = s.question.title;
-    $("r-shown").textContent = s.question.shown;
-    const res = s.result;
-    if (res) {
-      $("r-badge").textContent = res.blocked ? "🛡️ 막혔습니다" : "🚪 통과했습니다";
-      $("r-badge").className = "badge-big " + (res.blocked ? "block" : "pass");
-      const correct = s.my_vote && (s.my_vote === "block") === res.blocked;
-      $("r-mine").textContent = !s.my_vote ? "" : correct ? "맞혔어요! 🎉" : "아쉬워요 😅";
-      $("r-explain").textContent = res.explain;
-    }
-    return show("reveal");
-  }
   if (s.phase === "challenge") {
     if (!cardsFilled && s.cards) {
       for (const a of s.cards.attacks) {
@@ -132,12 +110,6 @@ $("join-form").addEventListener("submit", async (e) => {
     tick();
   } catch (err) { alertInline($("nick"), err.message); }
 });
-
-for (const [id, choice] of [["vote-block", "block"], ["vote-pass", "pass"]]) {
-  $(id).addEventListener("click", async () => {
-    try { await api("/api/vote", { choice }); tick(); } catch (err) { $("vote-msg").textContent = err.message; }
-  });
-}
 
 $("send").addEventListener("click", async () => {
   if (!pickedAttack) return;

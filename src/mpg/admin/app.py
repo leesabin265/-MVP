@@ -123,8 +123,7 @@ class RuleOverrideIn(BaseModel):
 
 
 class ClassPhaseIn(BaseModel):
-    phase: Literal["lobby", "vote", "reveal", "challenge", "end"]
-    q: int | None = PField(default=None, ge=0, le=20)
+    phase: Literal["lobby", "challenge", "end"]
 
 
 class PublishIn(BaseModel):
