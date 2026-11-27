@@ -3,12 +3,12 @@ import { api, ApiError, errorText } from "../api";
 import type { Ctx } from "../App";
 
 // 수업 발표용 실시간 참여(발표자 화면). 학생은 휴대폰으로 classroom 서비스(8080)에 접속하고,
-// 이 탭은 admin-api(/admin/api/class/*)를 거쳐 단계 진행·공개·심사를 한다.
-// 학생 입력은 공격 문자열이므로 JSX 텍스트로만 렌더링한다(React가 이스케이프).
+// 이 탭은 admin-api(/admin/api/class/*)를 거쳐 단계 진행·공개를 한다.
+// 학생이 보낸 공격 문자열은 JSX 텍스트로만 렌더링한다(React가 이스케이프).
 
-type Pending = { id: number; nick: string; target: string; payload: string; status: number; request_id: string };
-type Recent = { nick: string; target: string; payload: string; blocked: boolean; verdict: string | null };
-type Board = { nick: string; accepted: number };
+type Crack = { label: string; count: number; request_id: string };
+type Recent = { nick: string; attack: string; payload: string; blocked: boolean; disguises: string[] };
+type Board = { nick: string; cracked: number; attacks: string[] };
 type State = {
   phase: "lobby" | "vote" | "reveal" | "challenge" | "end";
   q: number;
@@ -18,7 +18,13 @@ type State = {
   question?: { id: string; title: string; shown: string; hint: string; explain: string };
   votes?: { block: number; pass: number };
   result?: { status: number; blocked: boolean; request_id: string } | null;
-  challenge: { total: number; blocked: number; passed: number; pending: Pending[]; recent: Recent[]; leaderboard: Board[] };
+  challenge: {
+    total: number; blocked: number; passed: number;
+    cracks: Record<string, Crack>;
+    disguise_wins: { label: string; n: number }[];
+    recent: Recent[];
+    leaderboard: Board[];
+  };
 };
 
 export default function Classroom({ ctx }: { ctx: Ctx }) {
@@ -144,56 +150,55 @@ export default function Classroom({ ctx }: { ctx: Ctx }) {
             <div className="card cls-stat pass"><b>{s.challenge.passed}</b><span>통과</span></div>
             <div className="card cls-stat"><b>{s.challenge.total}</b><span>전체 시도</span></div>
           </div>
-          <div className="cls-cols">
-            {s.phase === "challenge" && (
-              <div className="card stack">
-                <h3>통과한 입력 — 공격으로 인정할까요?</h3>
-                {!s.challenge.pending.length && <p className="muted">심사할 입력이 없습니다.</p>}
-                <ul className="cls-list">
-                  {s.challenge.pending.slice().reverse().map((p) => (
-                    <li key={p.id}>
-                      <b>{p.nick}</b> <span className="muted small">→ {p.target} (HTTP {p.status})</span>
-                      <div><code className="code">{p.payload}</code></div>
-                      <div className="row">
-                        <button className="btn small primary" disabled={busy} onClick={() => act("/class/verdict", { id: p.id, verdict: "accepted" })}>
-                          공격 인정
-                        </button>
-                        <button className="btn small" disabled={busy} onClick={() => act("/class/verdict", { id: p.id, verdict: "rejected" })}>
-                          불인정
-                        </button>
-                        {p.request_id && (
-                          <button className="link small" onClick={() => ctx.openEvent(p.request_id)}>로그</button>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+          <div className="cls-cracks">
+            {Object.entries(s.challenge.cracks).map(([id, c]) => (
+              <div key={id} className="card cls-crack">
+                <div className="cls-crack-head">
+                  <b>{c.label}</b>
+                  {c.request_id && (
+                    <button className="link small" onClick={() => ctx.openEvent(c.request_id)}>로그</button>
+                  )}
+                </div>
+                <div className={c.count ? "cls-crack-n done" : "cls-crack-n"}>
+                  {c.count ? `${c.count}명 뚫음 🔓` : "아직 아무도 못 뚫음 🔒"}
+                </div>
               </div>
-            )}
+            ))}
+          </div>
+          <div className="cls-cols">
             <div className="card stack">
-              <h3>🏆 순위</h3>
-              {!s.challenge.leaderboard.length && <p className="muted">아직 인정된 공격이 없습니다.</p>}
+              <h3>🏆 순위 (서로 다른 공격을 뚫은 수)</h3>
+              {!s.challenge.leaderboard.length && <p className="muted">아직 뚫은 사람이 없습니다.</p>}
               <ol className="cls-board">
                 {s.challenge.leaderboard.map((b) => (
-                  <li key={b.nick}>{b.nick} — {b.accepted}개</li>
+                  <li key={b.nick}>{b.nick} — {b.cracked}개 {b.cracked >= 3 ? "👑" : ""}</li>
                 ))}
               </ol>
-              {s.phase === "challenge" && (
+              {!!s.challenge.disguise_wins.length && (
                 <>
-                  <h3>최근 시도</h3>
+                  <h3>가장 잘 통한 변장</h3>
                   <ul className="cls-list small">
-                    {s.challenge.recent.map((r, i) => (
-                      <li key={i}>
-                        <span className={r.blocked ? "badge red" : r.verdict === "accepted" ? "badge amber" : "badge green"}>
-                          {r.blocked ? "차단" : "통과"}
-                        </span>{" "}
-                        {r.nick} <code className="code">{r.payload}</code>
-                      </li>
+                    {s.challenge.disguise_wins.map((d, i) => (
+                      <li key={i}>{d.label} <span className="muted">— {d.n}회 통과</span></li>
                     ))}
                   </ul>
                 </>
               )}
             </div>
+            {s.phase === "challenge" && (
+              <div className="card stack">
+                <h3>최근 시도</h3>
+                <ul className="cls-list small">
+                  {s.challenge.recent.map((r, i) => (
+                    <li key={i}>
+                      <span className={r.blocked ? "badge red" : "badge green"}>{r.blocked ? "막힘" : "통과"}</span>{" "}
+                      {r.nick} <span className="muted small">{r.attack}</span>{" "}
+                      <span className="muted small">{r.disguises.length ? r.disguises.join(" ") : "변장 없음"}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </>
       )}

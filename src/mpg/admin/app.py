@@ -127,11 +127,6 @@ class ClassPhaseIn(BaseModel):
     q: int | None = PField(default=None, ge=0, le=20)
 
 
-class ClassVerdictIn(BaseModel):
-    id: int = PField(ge=1)
-    verdict: Literal["accepted", "rejected"]
-
-
 class PublishIn(BaseModel):
     comment: str = PField(default="", max_length=500)
 
@@ -838,10 +833,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @api.post("/class/phase")
     async def class_phase(body: ClassPhaseIn, sess: auth.Session = Depends(operator)):
         return await _classroom("POST", "phase", body.model_dump(exclude_none=True))
-
-    @api.post("/class/verdict")
-    async def class_verdict(body: ClassVerdictIn, sess: auth.Session = Depends(operator)):
-        return await _classroom("POST", "verdict", body.model_dump())
 
     @api.post("/class/reset")
     async def class_reset(request: Request, sess: auth.Session = Depends(operator)):

@@ -47,19 +47,22 @@
   </section>
 
   <section id="v-challenge" hidden>
-    <p class="tag">우회 챌린지</p>
-    <h2>게이트웨이를 통과시켜 보세요</h2>
-    <p class="muted small">입력은 실제 게이트웨이로 갑니다. 통과한 '공격'은 발표자가 인정하면 순위에 오릅니다.</p>
-    <form id="submit-form">
-      <label>보낼 곳
-        <select id="target"></select>
-      </label>
-      <textarea id="payload" maxlength="500" rows="3" placeholder="예: ' OR 1=1--" required></textarea>
-      <label class="row small"><input type="checkbox" id="raw"> 직접 URL 인코딩함(%xx를 그대로 보냄)</label>
-      <button class="primary big" id="send">보내기</button>
-    </form>
-    <p id="send-msg" class="big-text"></p>
-    <h3>내 기록</h3>
+    <p class="tag">변장 챌린지</p>
+    <h2>공격을 변장시켜 게이트웨이를 뚫어라</h2>
+    <p class="muted small">공격 1개와 변장을 골라 보내세요. 통과하면 바로 점수! 어떤 변장이 뚫는지 찾아보세요.</p>
+
+    <p id="crack-progress" class="crack-progress"></p>
+
+    <h3>① 공격 고르기</h3>
+    <div id="attacks" class="cards"></div>
+
+    <h3>② 변장 붙이기 (여러 개 가능)</h3>
+    <div id="disguises" class="cards"></div>
+
+    <button class="primary big" id="send" disabled>🚀 보내기</button>
+    <div id="send-result" class="send-result"></div>
+
+    <h3>내 시도</h3>
     <ul id="mine" class="list"></ul>
   </section>
 

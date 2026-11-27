@@ -76,3 +76,17 @@ ol.list { list-style: decimal inside; }
 .actions .ok { background: var(--pass); border-color: var(--pass); color: #fff; }
 .big-list li { font-size: 1.8rem; }
 @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+
+/* 변장 챌린지 카드 */
+.cards { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 6px 0 4px; }
+.student .cards.disguise-grid, #disguises { grid-template-columns: 1fr 1fr; }
+.card { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 12px 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); cursor: pointer; }
+.card b { font-size: 1.05rem; }
+.card.picked { border-color: var(--accent); background: #1b2740; }
+.card.attack.picked { border-color: var(--win); background: #2b2614; }
+.crack-progress { font-weight: 800; font-size: 1.1rem; color: var(--win); margin: 4px 0; }
+.send-result { margin: 12px 0; padding: 12px 14px; border-radius: 12px; min-height: 8px; }
+.send-result.block { background: rgba(229,72,77,.16); border: 1px solid var(--block); }
+.send-result.pass { background: rgba(62,155,79,.16); border: 1px solid var(--pass); }
+.send-result code { display: block; margin-top: 8px; word-break: break-all; }
+#disguises { margin-bottom: 4px; }

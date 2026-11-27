@@ -50,12 +50,12 @@ function fillBoard(el, rows) {
   if (!rows.length) {
     const li = document.createElement("li");
     li.className = "muted";
-    li.textContent = "아직 인정된 공격이 없습니다";
+    li.textContent = "아직 뚫은 사람이 없습니다";
     el.appendChild(li);
   }
   for (const r of rows) {
     const li = document.createElement("li");
-    li.textContent = r.nick + " — " + r.accepted + "개";
+    li.textContent = r.nick + " — " + r.cracked + "개" + (r.cracked >= 3 ? " 👑" : "");
     el.appendChild(li);
   }
 }
@@ -97,29 +97,15 @@ function render(s) {
     $("s-total").textContent = c.total;
     const pend = $("pending");
     pend.replaceChildren();
-    if (!c.pending.length) {
-      const li = document.createElement("li");
-      li.className = "muted";
-      li.textContent = "심사할 입력이 없습니다";
-      pend.appendChild(li);
-    }
-    for (const p of c.pending.slice().reverse()) {
+    for (const [, cr] of Object.entries(c.cracks)) {
       const li = document.createElement("li");
       li.className = "pending";
       const who = document.createElement("b");
-      who.textContent = p.nick;
-      const where = document.createElement("span");
-      where.className = "muted small";
-      where.textContent = " → " + p.target + " (HTTP " + p.status + ")";
-      const code = document.createElement("code");
-      code.textContent = p.payload;
-      const act = document.createElement("span");
-      act.className = "actions";
-      act.append(
-        btn("공격 인정", () => api("/api/presenter/verdict", { id: p.id, verdict: "accepted" }), "ok"),
-        btn("불인정", () => api("/api/presenter/verdict", { id: p.id, verdict: "rejected" }), ""),
-      );
-      li.append(who, where, document.createElement("br"), code, act);
+      who.textContent = cr.label;
+      const n = document.createElement("div");
+      n.className = cr.count ? "cls-crack-n done" : "cls-crack-n";
+      n.textContent = cr.count ? cr.count + "명 뚫음 🔓" : "아직 아무도 못 뚫음 🔒";
+      li.append(who, n);
       pend.appendChild(li);
     }
     fillBoard($("board"), c.leaderboard);
@@ -128,11 +114,13 @@ function render(s) {
     for (const r of c.recent) {
       const li = document.createElement("li");
       const tag = document.createElement("span");
-      tag.className = "pill " + (r.blocked ? "block" : r.verdict === "accepted" ? "win" : "pass");
-      tag.textContent = r.blocked ? "차단" : "통과";
-      const code = document.createElement("code");
-      code.textContent = r.payload;
-      li.append(tag, " " + r.nick + " ", code);
+      tag.className = "pill " + (r.blocked ? "block" : "pass");
+      tag.textContent = r.blocked ? "막힘" : "통과";
+      li.append(tag, " " + r.nick + " ", document.createTextNode(r.attack + " "));
+      const dg = document.createElement("span");
+      dg.className = "muted small";
+      dg.textContent = r.disguises.length ? r.disguises.join(" ") : "변장 없음";
+      li.append(dg);
       rec.appendChild(li);
     }
     return show("challenge");

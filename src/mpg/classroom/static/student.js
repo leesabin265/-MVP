@@ -4,7 +4,9 @@
 const $ = (id) => document.getElementById(id);
 const views = ["join", "lobby", "vote", "reveal", "challenge", "end"];
 let last = null;
-let targetsFilled = false;
+let cardsFilled = false;
+let pickedAttack = null;
+const pickedDisguises = new Set();
 
 function show(name) {
   for (const v of views) $("v-" + v).hidden = v !== name;
@@ -50,32 +52,69 @@ function render(s) {
     return show("reveal");
   }
   if (s.phase === "challenge") {
-    if (!targetsFilled) {
-      for (const [k, label] of Object.entries(s.targets)) {
-        const o = document.createElement("option");
-        o.value = k;
-        o.textContent = label;
-        $("target").appendChild(o);
+    if (!cardsFilled && s.cards) {
+      for (const a of s.cards.attacks) {
+        const b = document.createElement("button");
+        b.className = "card attack";
+        b.dataset.id = a.id;
+        const t = document.createElement("b");
+        t.textContent = a.label;
+        const d = document.createElement("span");
+        d.className = "muted small";
+        d.textContent = a.desc;
+        b.append(t, d);
+        b.addEventListener("click", () => {
+          pickedAttack = a.id;
+          refreshCards();
+        });
+        $("attacks").appendChild(b);
       }
-      targetsFilled = true;
+      for (const g of s.cards.disguises) {
+        const b = document.createElement("button");
+        b.className = "card disguise";
+        b.dataset.id = g.id;
+        const t = document.createElement("b");
+        t.textContent = g.label;
+        const d = document.createElement("span");
+        d.className = "muted small";
+        d.textContent = g.blurb;
+        b.append(t, d);
+        b.addEventListener("click", () => {
+          if (pickedDisguises.has(g.id)) pickedDisguises.delete(g.id);
+          else pickedDisguises.add(g.id);
+          refreshCards();
+        });
+        $("disguises").appendChild(b);
+      }
+      cardsFilled = true;
+      refreshCards();
     }
+    const total = (s.cards?.attacks || []).length;
+    const n = (s.cracked || []).length;
+    $("crack-progress").textContent = `뚫은 공격 ${n} / ${total}` + (n === total && total ? "  🏆 전부 뚫었어요!" : "");
     const ul = $("mine");
     ul.replaceChildren();
     for (const m of s.mine || []) {
       const li = document.createElement("li");
       const tag = document.createElement("span");
-      tag.className = "pill " + (m.blocked ? "block" : m.verdict === "accepted" ? "win" : "pass");
-      tag.textContent = m.blocked ? "차단" : m.verdict === "accepted" ? "인정!" : m.verdict === "rejected" ? "통과·불인정" : "통과·심사중";
-      const code = document.createElement("code");
-      code.textContent = m.payload;
-      const where = document.createElement("span");
-      where.className = "muted small";
-      where.textContent = " " + m.target;
-      li.append(tag, " ", code, where);
+      tag.className = "pill " + (m.blocked ? "block" : "pass");
+      tag.textContent = m.blocked ? "막힘" : "통과!";
+      const label = document.createElement("span");
+      label.textContent = " " + m.attack + " ";
+      const dg = document.createElement("span");
+      dg.className = "muted small";
+      dg.textContent = m.disguises.length ? m.disguises.join(" ") : "변장 없음";
+      li.append(tag, label, dg);
       ul.appendChild(li);
     }
     return show("challenge");
   }
+}
+
+function refreshCards() {
+  for (const b of document.querySelectorAll("#attacks .card")) b.classList.toggle("picked", b.dataset.id === pickedAttack);
+  for (const b of document.querySelectorAll("#disguises .card")) b.classList.toggle("picked", pickedDisguises.has(b.dataset.id));
+  $("send").disabled = !pickedAttack;
 }
 
 async function tick() {
@@ -100,21 +139,29 @@ for (const [id, choice] of [["vote-block", "block"], ["vote-pass", "pass"]]) {
   });
 }
 
-$("submit-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
+$("send").addEventListener("click", async () => {
+  if (!pickedAttack) return;
   const btn = $("send");
   btn.disabled = true;
-  $("send-msg").textContent = "보내는 중…";
+  const box = $("send-result");
+  box.className = "send-result";
+  box.textContent = "보내는 중…";
   try {
-    const r = await api("/api/submit", { target: $("target").value, payload: $("payload").value, raw: $("raw").checked });
-    $("send-msg").textContent = r.blocked ? "🛡️ 막혔어요! 다른 방법을 써 보세요" : "🚪 통과! 발표자가 심사합니다";
-    $("send-msg").className = "big-text " + (r.blocked ? "block" : "pass");
+    const r = await api("/api/submit", { attack: pickedAttack, disguises: [...pickedDisguises] });
+    box.className = "send-result " + (r.blocked ? "block" : "pass");
+    const head = document.createElement("div");
+    head.className = "big-text";
+    head.textContent = r.blocked
+      ? "🛡️ 막혔어요! 다른 변장을 써 보세요"
+      : r.first_crack ? "🎉 뚫었다! 새 공격 성공 +1점" : "🚪 통과! (이미 뚫은 공격)";
+    const code = document.createElement("code");
+    code.textContent = "게이트웨이로 보낸 값: " + r.payload;
+    box.replaceChildren(head, code);
     tick();
   } catch (err) {
-    $("send-msg").textContent = err.message;
-    $("send-msg").className = "big-text";
+    box.textContent = err.message;
   } finally {
-    setTimeout(() => { btn.disabled = false; }, 1500);
+    setTimeout(() => { if (pickedAttack) btn.disabled = false; }, 1500);
   }
 });
 
