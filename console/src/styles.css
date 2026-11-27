@@ -189,3 +189,34 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   .span2, .span3 { grid-column: auto; }
   .short { width: 100%; }
 }
+
+/* 수업 참여(발표자) — 프로젝터에서 읽히도록 크게 */
+.cls-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.cls-count { font-size: 1.25rem; font-weight: 800; color: var(--accent); }
+.cls-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.cls-pair { display: inline-flex; gap: 4px; }
+.cls-center { text-align: center; }
+.cls-qr { width: min(44vh, 380px); height: auto; background: #fff; border-radius: 12px; padding: 8px; }
+.cls-url { font-family: ui-monospace, Consolas, monospace; font-size: 1.5rem; font-weight: 800; }
+.cls-title { font-size: 1.8rem; margin: 0; }
+.cls-payload { font-family: ui-monospace, Consolas, monospace; font-size: 1.8rem; background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; white-space: pre-wrap; word-break: break-all; margin: 0; }
+.cls-barrow { display: grid; grid-template-columns: 140px 1fr 48px; align-items: center; gap: 12px; font-size: 1.2rem; font-weight: 700; }
+.cls-track { height: 30px; background: var(--gray-bg); border-radius: 8px; overflow: hidden; }
+.cls-fill { height: 100%; transition: width .5s ease; }
+.cls-fill.block { background: var(--red); }
+.cls-fill.pass { background: var(--green); }
+.cls-result { display: inline-block; align-self: flex-start; padding: 10px 20px; border-radius: 12px; font-size: 1.5rem; font-weight: 800; }
+.cls-result.block { background: var(--red-bg); color: var(--red); border: 2px solid var(--red); }
+.cls-result.pass { background: var(--green-bg); color: var(--green); border: 2px solid var(--green); }
+.cls-explain { font-size: 1.2rem; margin: 0; }
+.cls-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.cls-stat { text-align: center; }
+.cls-stat b { display: block; font-size: 3rem; line-height: 1.1; }
+.cls-stat.block b { color: var(--red); }
+.cls-stat.pass b { color: var(--green); }
+.cls-cols { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+.cls-list { list-style: none; padding: 0; margin: 0; }
+.cls-list li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.cls-list .code { display: inline-block; margin: 4px 0; word-break: break-all; }
+.cls-board li { font-size: 1.3rem; font-weight: 700; padding: 2px 0; }
+@media (max-width: 900px) { .cls-cols { grid-template-columns: 1fr; } }

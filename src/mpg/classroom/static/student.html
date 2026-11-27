@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>게이트웨이를 뚫어라</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="student">
+<header class="bar"><span class="logo">◆ MPG</span><span id="who" class="muted"></span></header>
+
+<main>
+  <section id="v-join" hidden>
+    <h1>게이트웨이를 뚫어라</h1>
+    <p class="muted">발표 중에 휴대폰으로 참여합니다. 닉네임을 정해 주세요.</p>
+    <form id="join-form">
+      <input id="nick" maxlength="12" placeholder="닉네임 (12자까지)" autocomplete="off" required>
+      <button class="primary big">참여하기</button>
+    </form>
+  </section>
+
+  <section id="v-lobby" hidden>
+    <h1>준비 완료!</h1>
+    <p class="muted">발표가 시작되면 이 화면이 자동으로 바뀝니다.</p>
+    <div class="pulse">●</div>
+  </section>
+
+  <section id="v-vote" hidden>
+    <p class="tag">예측 투표</p>
+    <h2 id="q-title"></h2>
+    <pre id="q-shown" class="payload"></pre>
+    <p id="q-hint" class="muted small"></p>
+    <div class="choices">
+      <button id="vote-block" class="choice block">🛡️ 막힌다</button>
+      <button id="vote-pass" class="choice pass">🚪 통과한다</button>
+    </div>
+    <p id="vote-msg" class="muted"></p>
+  </section>
+
+  <section id="v-reveal" hidden>
+    <p class="tag">결과</p>
+    <h2 id="r-title"></h2>
+    <pre id="r-shown" class="payload"></pre>
+    <div id="r-badge" class="badge-big"></div>
+    <p id="r-mine" class="big-text"></p>
+    <p id="r-explain" class="muted"></p>
+  </section>
+
+  <section id="v-challenge" hidden>
+    <p class="tag">우회 챌린지</p>
+    <h2>게이트웨이를 통과시켜 보세요</h2>
+    <p class="muted small">입력은 실제 게이트웨이로 갑니다. 통과한 '공격'은 발표자가 인정하면 순위에 오릅니다.</p>
+    <form id="submit-form">
+      <label>보낼 곳
+        <select id="target"></select>
+      </label>
+      <textarea id="payload" maxlength="500" rows="3" placeholder="예: ' OR 1=1--" required></textarea>
+      <label class="row small"><input type="checkbox" id="raw"> 직접 URL 인코딩함(%xx를 그대로 보냄)</label>
+      <button class="primary big" id="send">보내기</button>
+    </form>
+    <p id="send-msg" class="big-text"></p>
+    <h3>내 기록</h3>
+    <ul id="mine" class="list"></ul>
+  </section>
+
+  <section id="v-end" hidden>
+    <h1>참여해 주셔서 고마워요!</h1>
+    <p class="muted">발표 화면에서 결과를 확인하세요.</p>
+  </section>
+</main>
+<script src="/static/student.js"></script>
+</body>
+</html>

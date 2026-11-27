@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>발표자 화면 — 게이트웨이를 뚫어라</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="presenter">
+<header class="bar">
+  <span class="logo">◆ MPG 실시간 참여</span>
+  <span id="count" class="count"></span>
+  <nav id="controls" class="controls"></nav>
+</header>
+
+<main>
+  <section id="p-lobby" hidden class="center">
+    <h1>휴대폰으로 접속하세요</h1>
+    <img id="qr" alt="접속 QR 코드" class="qr">
+    <p id="url" class="url"></p>
+  </section>
+
+  <section id="p-quiz" hidden>
+    <p class="tag" id="quiz-tag"></p>
+    <h1 id="quiz-title"></h1>
+    <pre id="quiz-shown" class="payload huge"></pre>
+    <p id="quiz-hint" class="muted"></p>
+    <div class="bars">
+      <div class="barrow"><span class="lbl">🛡️ 막힌다</span><div class="track"><div id="bar-block" class="fill block"></div></div><span id="n-block" class="n"></span></div>
+      <div class="barrow"><span class="lbl">🚪 통과한다</span><div class="track"><div id="bar-pass" class="fill pass"></div></div><span id="n-pass" class="n"></span></div>
+    </div>
+    <div id="quiz-result" class="badge-big" hidden></div>
+    <p id="quiz-explain" class="explain" hidden></p>
+  </section>
+
+  <section id="p-challenge" hidden>
+    <div class="stats">
+      <div class="stat block"><span id="s-blocked">0</span><small>차단</small></div>
+      <div class="stat pass"><span id="s-passed">0</span><small>통과</small></div>
+      <div class="stat"><span id="s-total">0</span><small>전체 시도</small></div>
+    </div>
+    <div class="cols">
+      <div>
+        <h2>통과한 입력 — 공격으로 인정할까요?</h2>
+        <ul id="pending" class="list"></ul>
+      </div>
+      <div>
+        <h2>🏆 순위</h2>
+        <ol id="board" class="list"></ol>
+        <h2>최근 시도</h2>
+        <ul id="recent" class="list small"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-end" hidden class="center">
+    <h1>참여해 주셔서 고맙습니다</h1>
+    <ol id="final-board" class="list big-list"></ol>
+  </section>
+</main>
+<script src="/static/presenter.js"></script>
+</body>
+</html>

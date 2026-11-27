@@ -147,6 +147,20 @@ docker compose up -d --build
 - **조정값**: `GATEWAY_REPLICAS`(게이트웨이 대수), `GATEWAY_MAX_PCT_ESCAPES`(요청당 '%' 상한, 기본 100000), `GATEWAY_RESPONSE_INSPECT_BYTES`(응답 검사 크기, 0이면 끔).
 - **비밀값**: `deploy/secrets` 는 저장소에 커밋하지 않는다(.gitignore). 파일은 컨테이너의 비루트 사용자가 읽을 수 있도록 0644, 디렉터리는 0700.
 
+## 수업 발표용 실시간 참여
+
+게이트웨이 스택이 떠 있는 상태에서:
+
+```bash
+./deploy/class-up.sh
+```
+
+학생 접속 주소(QR)와 발표자 화면 주소를 출력한다. 학생은 같은 Wi-Fi에서 휴대폰으로 접속해
+① 예측 투표(문자열 3개가 막힐지/통과할지 → 발표자가 '공개'하면 실제 게이트웨이 판정)와
+② 우회 챌린지(직접 입력한 문자열을 실제 게이트웨이로 보냄, 통과한 것 중 발표자가 '공격 인정'한 것만 순위)에 참여한다.
+진행은 관리자 콘솔(https://localhost:9443)의 **'수업 참여' 탭**에서 한다(OPERATOR 이상). 콘솔이 admin-api를 거쳐 진행하므로 발표자 키가 브라우저로 가지 않는다.
+상태는 메모리에만 있고, 발표가 끝나면 `./deploy/class-up.sh down` 으로 내린다.
+
 ## 측정
 
 - 직접 만든 셋: `mpgctl regress` 또는 `python -m mpg.detection.regress` — 탐지 100%, 차단 99.30%, 오탐 0.37%(전부 기록만).

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Literal
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -56,6 +57,9 @@ class Settings:
         self.webhook = env("MPG_ALERT_WEBHOOK")
         self.run_consumer = env_bool("MPG_RUN_CONSUMER", True)
         self.auto_migrate = env_bool("MPG_AUTO_MIGRATE", True)
+        # 수업 참여 서비스(선택). 콘솔의 '수업 참여' 탭이 admin-api를 거쳐 발표자 기능을 쓴다(키는 브라우저에 가지 않는다).
+        self.classroom_url = (env("MPG_CLASSROOM_URL", "http://classroom:8080") or "").rstrip("/")
+        self.classroom_key = env("MPG_CLASS_PRESENTER_KEY", "") or ""
 
 
 # ───────────── 요청 모델 ─────────────
@@ -116,6 +120,16 @@ class RuleOverrideIn(BaseModel):
     rule_id: str = PField(min_length=1, max_length=16)
     mode: Literal["BLOCK", "DETECT"]
     reason: str = PField(min_length=5, max_length=500)
+
+
+class ClassPhaseIn(BaseModel):
+    phase: Literal["lobby", "vote", "reveal", "challenge", "end"]
+    q: int | None = PField(default=None, ge=0, le=20)
+
+
+class ClassVerdictIn(BaseModel):
+    id: int = PField(ge=1)
+    verdict: Literal["accepted", "rejected"]
 
 
 class PublishIn(BaseModel):
@@ -797,6 +811,44 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             rows = await conn.fetch(sql, *args)
         return [{**dict(r), "ts": r["ts"].isoformat(), "client_ip": str(r["client_ip"]) if r["client_ip"] else None}
                 for r in rows]
+
+    # ── 수업 참여(발표자) — 콘솔 로그인(OPERATOR 이상)으로 쓴다 ──
+    async def _classroom(method: str, path: str, body: dict | None = None) -> Response:
+        if not s.classroom_key:
+            raise HTTPException(503, {"error": "classroom_not_configured"})
+        try:
+            async with httpx.AsyncClient(base_url=s.classroom_url, timeout=10) as c:
+                r = await c.request(method, f"/api/presenter/{path}", json=body,
+                                    headers={"X-Presenter-Key": s.classroom_key})
+        except httpx.HTTPError:
+            raise HTTPException(503, {"error": "classroom_down"}) from None
+        if r.status_code >= 400:
+            raise HTTPException(r.status_code, {"error": "classroom_error", "detail": r.text[:200]})
+        return Response(r.content, status_code=r.status_code,
+                        media_type=r.headers.get("content-type", "application/json"))
+
+    @api.get("/class/state")
+    async def class_state(sess: auth.Session = Depends(operator)):
+        return await _classroom("GET", "state")
+
+    @api.get("/class/qr.svg")
+    async def class_qr(sess: auth.Session = Depends(operator)):
+        return await _classroom("GET", "qr.svg")
+
+    @api.post("/class/phase")
+    async def class_phase(body: ClassPhaseIn, sess: auth.Session = Depends(operator)):
+        return await _classroom("POST", "phase", body.model_dump(exclude_none=True))
+
+    @api.post("/class/verdict")
+    async def class_verdict(body: ClassVerdictIn, sess: auth.Session = Depends(operator)):
+        return await _classroom("POST", "verdict", body.model_dump())
+
+    @api.post("/class/reset")
+    async def class_reset(request: Request, sess: auth.Session = Depends(operator)):
+        res = await _classroom("POST", "reset")
+        async with st["pool"].acquire() as conn:
+            await audit(conn, sess.login_id, "classroom.reset", "", client_ip=request.state.ip)
+        return res
 
     @app.get("/health")
     async def health():
