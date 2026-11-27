@@ -66,13 +66,21 @@ def wait_event(a: Admin, rid: str, timeout: float = 10.0) -> dict:
     raise AssertionError(f"event {rid} not stored")
 
 
+GATEWAYS = int(os.environ.get("MPG_E2E_GATEWAYS", "2"))
+
+
 def wait_gateway_version(gw: httpx.Client, version: int, timeout: float = 10.0) -> float:
-    t0 = time.time()
+    """LB 뒤 게이트웨이 여러 대가 모두 새 버전이 될 때까지. 라운드로빈이라 연속 (대수×2)번 맞으면 전부 본 것이다."""
+    t0, streak = time.time(), 0
     while time.time() - t0 < timeout:
-        if gw.get("/__mpg/health").json().get("policy_version") == version:
+        h = httpx.Client(base_url=GW, verify=VERIFY, timeout=5)  # 새 연결이어야 LB가 다른 복제본으로 보낸다
+        ok = h.get("/__mpg/health").json().get("policy_version") == version
+        h.close()
+        streak = streak + 1 if ok else 0
+        if streak >= GATEWAYS * 2:
             return time.time() - t0
-        time.sleep(0.05)
-    raise AssertionError(f"gateway did not reach v{version}")
+        time.sleep(0.02)
+    raise AssertionError(f"gateways did not all reach v{version}")
 
 
 def active_version(a: Admin) -> int:
@@ -232,10 +240,105 @@ def test_board_threshold_is_active(gw, admin):
     assert r.status_code == 201
 
 
+EMBED = '<embed src="data:image/svg+xml;base64,PHN2Zz4=">'
+
+
+def test_rule_override_flow(gw, admin, op):
+    """경로별 룰 모드: 피드백 본문에서만 XSS-004(전역 탐지 모드)를 차단으로 올린다."""
+    assert gw.post("/api/feedback", json={"message": EMBED}).status_code == 200  # 4+4, XSS-004는 탐지 모드
+    body = {"path": "/api/feedback", "param": "message", "rule_id": "XSS-004", "mode": "BLOCK",
+            "reason": "피드백 본문 외부 리소스 태그 차단(e2e)"}
+    assert op.send("POST", "/rule-overrides", json=body).status_code == 403, "OPERATOR는 경로별 룰 모드를 바꿀 수 없다"
+    r = admin.send("POST", "/rule-overrides", json=body)
+    assert r.status_code == 201, r.text
+    oid = r.json()["id"]
+    assert admin.send("POST", "/rule-overrides", json=body).status_code == 409
+    assert admin.send("POST", "/rule-overrides", json={**body, "rule_id": "XSS-001"}).status_code == 400  # 이미 BLOCK
+    assert admin.send("POST", "/rule-overrides", json={**body, "path": "/api/*"}).status_code == 400
+    changes = admin.get("/policy/changes").json()["changes"]
+    assert {"type": "rule_override", "id": str(oid), "change": "added"} in changes
+    pub = admin.send("POST", "/policy/publish", json={"comment": "feedback XSS-004 block"})
+    assert pub.status_code == 201, pub.text
+    wait_gateway_version(gw, pub.json()["version"])
+    r = gw.post("/api/feedback", json={"message": EMBED})
+    assert r.status_code == 403
+    ev = wait_event(admin, r.json()["request_id"])
+    assert any(m["rule_id"] == "XSS-004" and m["mode"] == "BLOCK" for m in ev["matches"])
+    assert gw.post("/api/profile", data={"bio": EMBED}).status_code == 200  # 다른 경로는 전역 모드(탐지만)
+
+    assert admin.send("DELETE", f"/rule-overrides/{oid}").status_code == 200
+    v = admin.send("POST", "/policy/publish", json={"comment": "remove feedback override"}).json()["version"]
+    wait_gateway_version(gw, v)
+    assert gw.post("/api/feedback", json={"message": EMBED}).status_code == 200
+
+
+def test_board_override_is_active(gw, admin):
+    items = admin.get("/rule-overrides").json()
+    assert any(o["path"] == "/api/qna/posts" and o["rule_id"] == "XSS-004" and o["published"] for o in items)
+    assert gw.post("/api/qna/posts", json={"title": "q", "content": EMBED}).status_code == 403
+
+
+def test_command_injection_and_path_traversal_blocked(gw, admin):
+    r = gw.get("/api/tools/ping?host=127.0.0.1%3Bcat%20%2Fetc%2Fpasswd")
+    assert r.status_code == 403
+    rules = {m["rule_id"] for m in wait_event(admin, r.json()["request_id"])["matches"]}
+    assert "CMD-001" in rules and "PATH-002" in rules
+    assert gw.get("/api/download?file=..%2F..%2F..%2Fetc%2Fpasswd").status_code == 403
+    assert gw.get("/api/download?file=php%3A%2F%2Ffilter%2Fresource%3Dindex.php").status_code == 403
+    assert gw.get("/api/download?file=report_2026.pdf").status_code == 404  # 통과해서 백엔드가 404
+    assert gw.get("/api/tools/ping?host=example.com").status_code == 404
+
+
+def _multipart(filename: str, content: bytes, ctype: str) -> tuple[bytes, str]:
+    b = "e2eBOUNDARY"
+    body = (f'--{b}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+            f"Content-Type: {ctype}\r\n\r\n").encode() + content + f"\r\n--{b}--\r\n".encode()
+    return body, f"multipart/form-data; boundary={b}"
+
+
+def test_upload_inspection(gw, admin):
+    png = b"\x89PNG\r\n\x1a\n" + bytes(64)
+    body, ct = _multipart("사진.png", png, "image/png")
+    assert gw.post("/api/upload", content=body, headers={"content-type": ct}).status_code == 200  # 한글 이름도 통과
+    body, ct = _multipart("avatar.png", b"<?php system($_GET['c']); ?>", "image/png")
+    r = gw.post("/api/upload", content=body, headers={"content-type": ct})
+    assert r.status_code == 403
+    rules = {m["rule_id"] for m in wait_event(admin, r.json()["request_id"])["matches"]}
+    assert "FILE-003" in rules
+    body, ct = _multipart("cat.jpg", b"\xff\xd8\xff\xe0" + bytes(32) + b"<?php eval($_POST[1]); ?>", "image/jpeg")
+    assert gw.post("/api/upload", content=body, headers={"content-type": ct}).status_code == 403
+
+
+def test_response_inspection(gw, admin):
+    ok = gw.get("/api/demo/legacy-report?name=monthly")
+    assert ok.status_code == 200
+    r = gw.get("/api/demo/legacy-report?name=a%27")  # 요청은 통과, 백엔드가 DB 오류 원문을 500으로 내보냄
+    assert r.status_code == 502 and r.json()["error"] == "response_blocked"
+    assert "sql syntax" not in r.text.lower()
+    ev = wait_event(admin, r.json()["request_id"])
+    assert ev["action"] == "BLOCK" and ev["masked_sample"] == "[response redacted]"
+    assert {m["rule_id"] for m in ev["matches"]} >= {"RESP-001", "RESP-007"}
+    assert gw.get("/api/demo/file?kind=passwd").status_code == 502
+    assert gw.get("/api/demo/file?kind=key").status_code == 502
+    assert gw.get("/api/demo/file?kind=readme").status_code == 200
+
+
+def test_multiple_gateways_report(admin):
+    end = time.time() + 25
+    while time.time() < end:
+        gws = admin.get("/metrics/summary?period=1h").json()["gateways"]
+        if len({g["instance"].split(":")[0] for g in gws}) >= GATEWAYS:
+            return
+        time.sleep(1)
+    raise AssertionError(f"expected {GATEWAYS} gateway hosts, got {[g['instance'] for g in gws]}")
+
+
 def test_rollback_and_audit(gw, admin):
     versions = admin.get("/policy/versions").json()
     current = versions[0]["version"]
-    r = admin.send("POST", "/policy/rollback/1", json={"reason": "e2e"})
+    # 시드(최근 seed-rules 발행)로 되돌린다. v1로 되돌리면 이후 추가된 룰이 꺼진 채로 남는다.
+    seed = max(v["version"] for v in versions if v["comment"].startswith("seed") and v["version"] < current)
+    r = admin.send("POST", f"/policy/rollback/{seed}", json={"reason": "e2e"})
     assert r.status_code == 200, r.text
     v = r.json()["version"]
     assert v == current + 1
@@ -244,7 +347,7 @@ def test_rollback_and_audit(gw, admin):
     actions = {a["action"] for a in admin.get("/audit?limit=200").json()}
     assert {"policy.rollback", "policy.publish", "exception.create", "event.view",
             "event.false_positive", "policy.publish_rejected", "threshold.create",
-            "threshold.deactivate"} <= actions
+            "threshold.deactivate", "rule_override.create", "rule_override.deactivate"} <= actions
 
 
 def test_summary(admin):

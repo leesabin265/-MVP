@@ -7,7 +7,7 @@ from typing import Any, Iterable
 import re2
 import yaml
 
-from .models import Category, Mode, PathThreshold, Policy, Rule, RuleException, RuleKind
+from .models import Category, Mode, PathRuleOverride, PathThreshold, Policy, Rule, RuleException, RuleKind
 
 THRESHOLD_MIN = 3
 THRESHOLD_MAX_RAISE = 4
@@ -26,6 +26,13 @@ KNOWN_SIGNALS = {
     "mixed_case",
     "duplicate_param",
     "js_escape",
+    "newline_command",
+    "upload_script_ext",
+    "upload_double_ext",
+    "upload_type_mismatch",
+    "upload_embedded_code",
+    "upload_executable",
+    "response_5xx",
 }
 
 
@@ -121,11 +128,8 @@ def exception_from_dict(d: dict[str, Any]) -> RuleException:
 
 def path_threshold_from_dict(d: dict[str, Any], global_threshold: int = 6) -> PathThreshold:
     path = str(d.get("path") or "")
-    if not path.startswith("/"):
-        raise RuleError("path threshold: path must start with '/'")
     param = d.get("param") or None
-    if any(ch in path + (param or "") for ch in "*?"):
-        raise RuleError("path threshold: wildcards are not allowed (use prefix: true)")
+    _check_scope("path threshold", path, param)
     try:
         t = int(d["threshold"])
     except (KeyError, TypeError, ValueError):
@@ -140,16 +144,55 @@ def path_threshold_from_dict(d: dict[str, Any], global_threshold: int = 6) -> Pa
                          id=str(d["id"]) if d.get("id") is not None else None)
 
 
+def _check_scope(kind: str, path: str, param: str | None) -> None:
+    if not path.startswith("/"):
+        raise RuleError(f"{kind}: path must start with '/'")
+    if any(ch in path + (param or "") for ch in "*?"):
+        raise RuleError(f"{kind}: wildcards are not allowed (use prefix: true)")
+
+
+def rule_override_from_dict(d: dict[str, Any], rules: Iterable[Rule] | None = None,
+                            strict: bool = False) -> PathRuleOverride:
+    """경로별 룰 모드. rules를 주면 룰이 있는지 검사한다.
+
+    strict(새로 등록할 때만)는 전역 모드와 같아 바꾸는 게 없는 설정도 거부한다. 스냅샷을 읽을 때는 쓰지 않는다:
+    나중에 룰의 전역 모드를 바꿨다고 이미 발행된 정책을 못 읽게 되면 게이트웨이 리로드가 실패한다.
+    """
+    path = str(d.get("path") or "")
+    param = d.get("param") or None
+    _check_scope("rule override", path, param)
+    prefix = bool(d.get("prefix", False))
+    if prefix and len(path) < 2:
+        raise RuleError("rule override: prefix '/' would cover every path; change the rule's mode instead")
+    rid = str(d.get("rule_id") or "")
+    if not rid:
+        raise RuleError("rule override: 'rule_id' is required")
+    try:
+        mode = Mode(d.get("mode"))
+    except ValueError:
+        raise RuleError("rule override: mode must be BLOCK or DETECT") from None
+    if rules is not None:
+        by_id = {r.id: r for r in rules}
+        if rid not in by_id:
+            raise RuleError(f"rule override: unknown rule {rid!r}")
+        if strict and by_id[rid].mode is mode:
+            raise RuleError(f"rule override: {rid} is already {mode.value} globally")
+    return PathRuleOverride(path=path, rule_id=rid, mode=mode, param=param, prefix=prefix,
+                            id=str(d["id"]) if d.get("id") is not None else None)
+
+
 def load_policy(path: str | Path, version: int = 1, threshold: int = 6) -> Policy:
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     rules = load_rules(data["rules"])
     exceptions = tuple(exception_from_dict(e) for e in data.get("exceptions") or ())
     th = int(data.get("threshold", threshold))
     pts = tuple(path_threshold_from_dict(t, th) for t in data.get("path_thresholds") or ())
+    ovs = tuple(rule_override_from_dict(o, rules) for o in data.get("rule_overrides") or ())
     return Policy(
         version=int(data.get("version", version)),
         rules=rules,
         exceptions=exceptions,
         threshold=th,
         path_thresholds=pts,
+        rule_overrides=ovs,
     )

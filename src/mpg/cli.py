@@ -85,15 +85,18 @@ async def cmd_create_admin(a) -> int:
 async def cmd_seed_rules(a) -> int:
     from mpg.admin import policy_service as ps
     from mpg.admin.db import audit
-    from mpg.detection.rules import load_rules, path_threshold_from_dict
+    from mpg.detection.rules import load_rules, path_threshold_from_dict, rule_override_from_dict
 
     data = yaml.safe_load(Path(a.file).read_text(encoding="utf-8"))
     items = data["rules"] if isinstance(data, dict) else data
-    load_rules(items)
+    rules = load_rules(items)
     global_t = int(data.get("threshold", 6)) if isinstance(data, dict) else 6
     pts = data.get("path_thresholds") or [] if isinstance(data, dict) else []
     for t in pts:
         path_threshold_from_dict(t, global_t)
+    ovs = data.get("rule_overrides") or [] if isinstance(data, dict) else []
+    for o in ovs:
+        rule_override_from_dict(o, rules, strict=True)
     s = _settings()
     pool = await _pool(s)
     r = await _redis(s)
@@ -103,7 +106,8 @@ async def cmd_seed_rules(a) -> int:
                 await ps.upsert_rule(conn, d, "mpgctl")
             await audit(conn, "mpgctl", "rule.seed", a.file, None, {"count": len(items)})
             seeded = await _seed_path_thresholds(conn, pts, audit)
-    print(f"{len(items)} rules loaded, path thresholds: {seeded}")
+            seeded_ov = await _seed_rule_overrides(conn, ovs, audit)
+    print(f"{len(items)} rules loaded, path thresholds: {seeded}, rule overrides: {seeded_ov}")
     try:
         res = await ps.publish(pool, r, ps.Datasets.load(s.datasets_dir), "mpgctl",
                                comment=f"seed {Path(a.file).name}", force_initial=a.force)
@@ -147,6 +151,34 @@ async def _seed_path_thresholds(conn, pts: list[dict], audit) -> str:
                     {"id": row["id"], "threshold": row["threshold"]} if row else None,
                     {"path": t["path"], "param": param, "prefix": prefix, "threshold": int(t["threshold"])},
                     str(t.get("reason") or ""))
+    return f"{added} added, {replaced} replaced, {kept} unchanged"
+
+
+async def _seed_rule_overrides(conn, ovs: list[dict], audit) -> str:
+    """파일의 경로별 룰 모드를 DB에 맞춘다(_seed_path_thresholds와 같은 규칙)."""
+    added = kept = replaced = 0
+    for o in ovs:
+        param = o.get("param") or None
+        prefix = bool(o.get("prefix", False))
+        row = await conn.fetchrow(
+            "SELECT id, mode FROM path_rule_overrides WHERE active AND path=$1 AND coalesce(param,'')=$2"
+            " AND prefix=$3 AND rule_id=$4", o["path"], param or "", prefix, o["rule_id"])
+        if row and row["mode"] == o["mode"]:
+            kept += 1
+            continue
+        if row:
+            await conn.execute("UPDATE path_rule_overrides SET active=false WHERE id=$1", row["id"])
+            replaced += 1
+        else:
+            added += 1
+        oid = await conn.fetchval(
+            "INSERT INTO path_rule_overrides(path, param, prefix, rule_id, mode, reason, created_by)"
+            " VALUES ($1,$2,$3,$4,$5,$6,'mpgctl') RETURNING id",
+            o["path"], param, prefix, o["rule_id"], o["mode"], str(o.get("reason") or "seed"))
+        await audit(conn, "mpgctl", "rule_override.seed", str(oid),
+                    {"id": row["id"], "mode": row["mode"]} if row else None,
+                    {"path": o["path"], "param": param, "prefix": prefix, "rule_id": o["rule_id"],
+                     "mode": o["mode"]}, str(o.get("reason") or ""))
     return f"{added} added, {replaced} replaced, {kept} unchanged"
 
 

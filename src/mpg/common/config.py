@@ -58,7 +58,15 @@ def database_url(user_var: str, password_var: str) -> str:
     pw = env(password_var, "")
     from urllib.parse import quote
 
-    return f"postgresql://{quote(user)}:{quote(pw)}@{host}:{port}/{name}"
+    url = f"postgresql://{quote(user)}:{quote(pw)}@{host}:{port}/{name}"
+    # 내부망 TLS: MPG_DB_SSLMODE=verify-full + MPG_DB_SSLROOTCERT=사설 CA. 비우면 평문(로컬 개발용).
+    sslmode = env("MPG_DB_SSLMODE")
+    if sslmode:
+        url += f"?sslmode={quote(sslmode)}"
+        root = env("MPG_DB_SSLROOTCERT")
+        if root:
+            url += f"&sslrootcert={quote(root)}"
+    return url
 
 
 def redis_url(user_var: str, password_var: str) -> str:
@@ -76,6 +84,11 @@ def redis_url(user_var: str, password_var: str) -> str:
         auth = f"{quote(user)}:{quote(pw)}@"
     elif pw:
         auth = f":{quote(pw)}@"
+    # 내부망 TLS: MPG_REDIS_TLS_CA=사설 CA 경로가 있으면 rediss:// + 인증서·호스트 이름 검증.
+    ca = env("MPG_REDIS_TLS_CA")
+    if ca:
+        return (f"rediss://{auth}{host}:{port}/0?ssl_ca_certs={quote(ca)}"
+                "&ssl_cert_reqs=required&ssl_check_hostname=true")
     return f"redis://{auth}{host}:{port}/0"
 
 

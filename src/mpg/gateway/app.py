@@ -35,8 +35,9 @@ from mpg.detection.models import Action
 
 from . import metrics
 from .events import EventSink
-from .extract import BadRequest, RawRequest, build_inspection
+from .extract import MAX_PCT_ESCAPES, BadRequest, RawRequest, build_inspection
 from .policy_manager import PolicyManager
+from .response_body import inspectable, read_prefix, replay, to_text
 
 log = logging.getLogger("mpg.gateway")
 access = logging.getLogger("mpg.gateway.access")
@@ -51,6 +52,8 @@ class Settings:
     def __init__(self) -> None:
         self.backend_url = env("MPG_BACKEND_URL", "http://localhost:9000").rstrip("/")
         self.max_body = env_int("MPG_MAX_BODY_BYTES", 1 << 20)
+        self.max_pct_escapes = env_int("MPG_MAX_PCT_ESCAPES", MAX_PCT_ESCAPES)
+        self.resp_inspect_bytes = env_int("MPG_RESPONSE_INSPECT_BYTES", 256 * 1024)  # 0이면 응답 검사 끔
         self.backend_timeout = env_float("MPG_BACKEND_TIMEOUT", 5.0)
         self.internal_nets = parse_networks(env("MPG_INTERNAL_CIDRS", PRIVATE_DEFAULT))
         self.trusted_proxies = parse_networks(env("MPG_TRUSTED_PROXIES", ""))
@@ -60,7 +63,17 @@ class Settings:
         self.cache_path = Path(env("MPG_POLICY_CACHE", "/tmp/mpg-policy-cache.json"))
         self.bootstrap_rules = Path(env("MPG_BOOTSTRAP_RULES", str(project_root() / "rules" / "rules.yaml")))
         self.poll_interval = env_float("MPG_POLICY_POLL_SECONDS", 30.0)
+        self.backend_ca = env("MPG_BACKEND_CA")  # 백엔드가 HTTPS(내부 CA)일 때 CA 경로
         self.instance = env("MPG_INSTANCE", f"{socket.gethostname()}:{os.getpid()}")
+
+
+def _backend_tls(ca: str | None):
+    if not ca:
+        return True
+    import ssl
+    ctx = ssl.create_default_context(cafile=ca)
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+    return ctx
 
 
 def _error(status: int, code: str, rid: str) -> JSONResponse:
@@ -89,6 +102,7 @@ def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
             timeout=httpx.Timeout(s.backend_timeout, connect=2.0),
             limits=httpx.Limits(max_connections=200, max_keepalive_connections=100),
             follow_redirects=False,
+            verify=_backend_tls(s.backend_ca),
         )
         window = metrics.Window()
         state.update(redis=r, pm=pm, sink=sink, client=client, window=window)
@@ -116,7 +130,8 @@ def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
 
     @app.get("/__mpg/health")
     async def health(request: Request):
-        if not ip_in(request.client.host if request.client else None, s.internal_nets):
+        # 로드밸런서 뒤에서는 접속 주소가 LB라서, 신뢰하는 프록시가 넘긴 실제 클라이언트 주소로 판단한다.
+        if not ip_in(client_ip(request), s.internal_nets):
             return Response(status_code=404)
         pm: PolicyManager = state["pm"]
         return {"status": "ok", "policy_version": pm.version, "policy_source": pm.source,
@@ -125,7 +140,8 @@ def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
 
     @app.get("/__mpg/metrics")
     async def prom(request: Request):
-        if not ip_in(request.client.host if request.client else None, s.internal_nets):
+        # 로드밸런서 뒤에서는 접속 주소가 LB라서, 신뢰하는 프록시가 넘긴 실제 클라이언트 주소로 판단한다.
+        if not ip_in(client_ip(request), s.internal_nets):
             return Response(status_code=404)
         body, ctype = metrics.render()
         return Response(body, media_type=ctype)
@@ -158,7 +174,7 @@ def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
         pipe = pm.pipeline
         ti = time.perf_counter()
         try:
-            insp = build_inspection(RawRequest(request.method, raw_path, qs, headers, body))
+            insp = build_inspection(RawRequest(request.method, raw_path, qs, headers, body), s.max_pct_escapes)
             verdict = pipe.inspect(insp)
         except BadRequest as e:
             metrics.INSPECTION.observe(time.perf_counter() - ti)
@@ -170,22 +186,25 @@ def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
             return _finish(_error(403, "blocked", rid), t0, 0.0, "BLOCK", request, ip, rid)
         metrics.INSPECTION.observe(time.perf_counter() - ti)
         metrics.REQUESTS.labels(verdict.action.value).inc()
+        _count_matches(verdict)
 
-        if verdict.action is not Action.ALLOW:
-            _emit(state["sink"], verdict, insp, request, ip, rid)
-            for m in verdict.matches:
-                if not m.excepted:
-                    metrics.RULE_MATCHES.labels(m.rule_id).inc()
+        # 요청 판정 이벤트는 응답 검사 결과와 합쳐 한 건으로 남긴다(security_events는 요청 ID당 한 건).
+        def emit(rv=None):
+            _emit(state["sink"], verdict, rv, insp, request, ip, rid)
+
         if verdict.action is Action.BLOCK:
+            emit()
             return _finish(_error(403, "blocked", rid), t0, 0.0, "BLOCK", request, ip, rid)
 
         fwd_headers = [(k, v) for k, v in headers if k.lower() not in HOP_BY_HOP
                        and not k.lower().startswith("x-forwarded-") and k.lower() != "x-request-id"]
         host = request.headers.get("host", "")
-        prior = request.headers.get("x-forwarded-for") if s.trusted_proxies else None
+        peer = request.client.host if request.client else ""
+        prior = request.headers.get("x-forwarded-for") if ip_in(peer, s.trusted_proxies) else None
         fwd_headers += [
             ("X-Request-ID", rid),
-            ("X-Forwarded-For", f"{prior}, {ip}" if prior else ip),
+            # 각 프록시는 자기가 받은 상대 주소를 뒤에 붙인다(LB 뒤면 '클라이언트, LB').
+            ("X-Forwarded-For", f"{prior}, {peer}" if prior else ip),
             ("X-Forwarded-Proto", scope.get("scheme", "http")),
             ("X-Forwarded-Host", host),
         ]
@@ -196,17 +215,51 @@ def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
             upstream_req = client.build_request(request.method, target, headers=fwd_headers, content=body)
             upstream = await client.send(upstream_req, stream=True)
         except httpx.TimeoutException:
+            emit()
             return _finish(_error(504, "gateway_timeout", rid), t0, time.perf_counter() - tu,
                            verdict.action.value, request, ip, rid)
         except httpx.HTTPError:
+            emit()
             return _finish(_error(502, "bad_gateway", rid), t0, time.perf_counter() - tu,
                            verdict.action.value, request, ip, rid)
+
+        # 응답 검사: 텍스트 응답의 앞부분만 담아 검사하고 나머지는 그대로 흘려보낸다.
+        body_iter = upstream.aiter_raw()
+        rv = None
+        if inspectable(request.method, upstream.status_code, upstream.headers, s.resp_inspect_bytes):
+            try:
+                prefix, complete = await read_prefix(body_iter, s.resp_inspect_bytes)
+            except httpx.HTTPError:
+                await upstream.aclose()
+                emit()
+                return _finish(_error(502, "bad_gateway", rid), t0, time.perf_counter() - tu,
+                               verdict.action.value, request, ip, rid)
+            tr = time.perf_counter()
+            try:
+                rv = pipe.inspect_response(insp.path, upstream.status_code,
+                                           to_text(prefix, upstream.headers, s.resp_inspect_bytes))
+            except Exception:
+                # 응답 검사 오류는 응답을 막지 않는다(요청 검사와 달리 Fail-Open). 오류 수는 지표로 센다.
+                metrics.INTERNAL_ERRORS.inc()
+                log.exception("response inspection failed; passing response", extra={"request_id": rid})
+            metrics.RESPONSE_INSPECTION.observe(time.perf_counter() - tr)
+            if rv is not None:
+                metrics.RESPONSE_VERDICTS.labels(rv.action.value).inc()
+                _count_matches(rv)
+            body_iter = replay(prefix, None if complete else body_iter)
         upstream_s = time.perf_counter() - tu
         metrics.UPSTREAM.observe(upstream_s)
+        emit(rv)
+        if rv is not None and rv.action is Action.BLOCK:
+            await upstream.aclose()
+            log.warning("response blocked", extra={"request_id": rid, "path": insp.path,
+                                                   "rules": [m.rule_id for m in rv.matches if not m.excepted]})
+            return _finish(_error(502, "response_blocked", rid), t0, upstream_s, "BLOCK", request, ip, rid)
+
         out_headers = [(k, v) for k, v in upstream.headers.multi_items()
                        if k.lower() not in HOP_BY_HOP or k.lower() == "content-length"]
         out_headers.append(("X-Request-ID", rid))
-        resp = StreamingResponse(upstream.aiter_raw(), status_code=upstream.status_code,
+        resp = StreamingResponse(body_iter, status_code=upstream.status_code,
                                  background=BackgroundTask(upstream.aclose))
         resp.raw_headers = [(k.lower().encode("latin-1"), v.encode("latin-1")) for k, v in out_headers]
         metrics.RESPONSES.labels(str(upstream.status_code)).inc()
@@ -227,25 +280,46 @@ def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
     return app
 
 
-def _emit(sink: EventSink, verdict, insp, request: Request, ip: str, rid: str) -> None:
-    top = max(verdict.fields, key=lambda f: (f.block_score, f.score))
-    ev_match = next((m for m in top.matches if not m.excepted), None)
-    sample = make_sample(top.field.location.value, top.field.name, top.field.value,
-                         ev_match.evidence if ev_match else "")
+_RANK = {Action.ALLOW: 0, Action.DETECT_ONLY: 1, Action.BLOCK: 2}
+
+
+def _count_matches(verdict) -> None:
+    for m in verdict.matches:
+        if not m.excepted:
+            metrics.RULE_MATCHES.labels(m.rule_id).inc()
+
+
+def _emit(sink: EventSink, verdict, rv, insp, request: Request, ip: str, rid: str) -> None:
+    """요청 판정과 (있으면) 응답 판정을 합쳐 이벤트 한 건으로 보낸다. 둘 다 ALLOW면 보내지 않는다."""
+    resp_flagged = rv is not None and rv.action is not Action.ALLOW
+    if verdict.action is Action.ALLOW and not resp_flagged:
+        return
+    action = max(verdict.action, rv.action if resp_flagged else Action.ALLOW, key=_RANK.get)
+    if verdict.action is not Action.ALLOW:
+        top = max(verdict.fields, key=lambda f: (f.block_score, f.score))
+        ev_match = next((m for m in top.matches if not m.excepted), None)
+        sample = make_sample(top.field.location.value, top.field.name, top.field.value,
+                             ev_match.evidence if ev_match else "")
+        field_ref = top.field.ref
+    else:
+        # 응답에서 찾은 것은 유출된 데이터 자체라 원문을 저장하지 않는다.
+        sample = "[response redacted]"
+        field_ref = rv.matches[0].field_ref
+    matches = list(verdict.matches) + (list(rv.matches) if resp_flagged else [])
     sink.emit({
         "request_id": rid,
         "ts": datetime.now(timezone.utc).isoformat(),
         "client_ip": ip,
         "method": request.method,
         "path": insp.path,
-        "risk_score": verdict.risk_score,
-        "action": verdict.action.value,
+        "risk_score": max(verdict.risk_score, rv.risk_score if resp_flagged else 0),
+        "action": action.value,
         "policy_version": verdict.policy_version,
-        "field_ref": top.field.ref,
+        "field_ref": field_ref,
         "masked_sample": sample,
         "matches": [{"rule_id": m.rule_id, "field_ref": m.field_ref, "score": m.score,
-                     "mode": m.mode.value, "excepted": m.excepted} for m in verdict.matches],
-        "inspect_ms": round(verdict.elapsed_ms, 3),
+                     "mode": m.mode.value, "excepted": m.excepted} for m in matches],
+        "inspect_ms": round(verdict.elapsed_ms + (rv.elapsed_ms if rv is not None else 0), 3),
     })
 
 

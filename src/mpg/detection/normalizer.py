@@ -32,6 +32,9 @@ SPECIAL = set("<>'\"`;=()")
 DISGUISE_SPECIAL = set("<>'\"`;=")
 JS_ESCAPE = re.compile(r"\\(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|u\{[0-9a-fA-F]{1,6}\})")
 JS_ESCAPE_RUN = _c(r"(\\(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4})){4,}")
+# 셸에서 개행은 명령 구분자다. 정규화 마지막에 공백으로 합쳐지므로 그 전에 신호로 남긴다.
+NEWLINE_COMMAND = _c(r"(?i)[\r\n][ \t]*(?:sudo[ \t]+)?(?:cat|id|whoami|uname|wget|curl|nc|ncat|bash|sh|"
+                     r"python[23]?|perl|ping|nslookup|sleep|rm|chmod|base64|powershell)(?:[ \t;|&]|$)")
 
 
 class Normalizer:
@@ -85,7 +88,10 @@ class Normalizer:
         text = value
         rounds = 0
         for i in range(self.max_url_rounds):
-            if "%" not in text and not (i == 0 and location in PLUS_AS_SPACE and "+" in text):
+            # 유효한 이스케이프(%XX·%uXXXX)가 없으면 unquote 결과는 입력과 같다. 그 경우 순수 Python
+            # unquote(1 MB의 '%'에 수백 ms)를 부르지 않고 끝낸다. 판정은 바뀌지 않는다(tests/test_normalizer.py).
+            plus = i == 0 and location in PLUS_AS_SPACE and "+" in text
+            if not plus and ("%" not in text or not PCT_ESCAPE.search(text)):
                 break
             decoded = PCT_U.sub(_pct_u, text) if "%u" in text or "%U" in text else text
             if i == 0 and location in PLUS_AS_SPACE:
@@ -109,6 +115,8 @@ class Normalizer:
         return text
 
     def _canonicalize(self, text: str, signals: set[str]) -> str:
+        if ("\n" in text or "\r" in text) and NEWLINE_COMMAND.search(text):
+            signals.add("newline_command")
         stripped = text.translate(CONTROL_CHARS)
         if len(stripped) != len(text):
             signals.add("control_char")

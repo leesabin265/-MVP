@@ -17,7 +17,7 @@ const TABS: { id: Tab; label: string; need?: "OPERATOR" | "ADMIN" }[] = [
   { id: "events", label: "탐지 로그" },
   { id: "rules", label: "룰" },
   { id: "exceptions", label: "예외" },
-  { id: "thresholds", label: "경로 임계값" },
+  { id: "thresholds", label: "경로별 설정" },
   { id: "policy", label: "정책 버전" },
   { id: "sandbox", label: "샌드박스", need: "OPERATOR" },
   { id: "audit", label: "감사 기록", need: "ADMIN" },

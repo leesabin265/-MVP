@@ -12,6 +12,14 @@ path_thresholds:
     threshold: 8
     reason: 기술 Q&A 게시판 본문 오탐 완화 (임계값 스윕 근거, docs/report.md 4장)
 
+# 경로별 룰 모드(경로별 룰 그룹). 가장 구체적인 설정 하나만 적용된다.
+rule_overrides:
+  - path: /api/qna/posts
+    param: content
+    rule_id: XSS-004
+    mode: BLOCK
+    reason: 임계값 8로 올린 게시판 본문에서 외부 리소스 태그(embed·base·link)가 기록만 되던 것을 다시 차단 (docs/report.md 4장)
+
 rules:
   # ───────────── SQL Injection ─────────────
   - id: SQLI-001
@@ -320,6 +328,185 @@ rules:
     keywords: ["__"]
     pattern: '__(class|mro|base|bases|subclasses|globals|init|builtins)__\W{1,4}(\w+\W{1,4}){0,3}__(class|mro|base|bases|subclasses|globals|init|builtins|import)__'
     weight: 6
+    mode: BLOCK
+
+  # ───────────── OS 명령어 삽입 ─────────────
+  # 단독으로 차단 기준(6)에 닿는 것은 '구분자 + 명령', '명령 치환', '역방향 셸' 처럼 셸 문법이 성립한 경우뿐이다.
+  # 기술 게시판에 흔한 'ls -al', 'sleep 5 && echo done' 은 게시판 경로 임계값(8)에서 기록만 된다.
+  - id: CMD-001
+    category: CMD
+    description: 셸 구분자(; | & `) 뒤 시스템 명령
+    keywords: [";", "|", "&", "`"]
+    pattern: '[;&|`]\s*(sudo\s+)?(cat|ls|id|whoami|uname|pwd|wget|curl|nc|ncat|netcat|bash|sh|zsh|dash|python[23]?|perl|ruby|php|ping|nslookup|dig|sleep|rm|chmod|chown|echo|touch|base64|ifconfig|env|printenv|telnet|tftp|xterm)(\s|$|[;&|`<>$])'
+    weight: 6
+    mode: BLOCK
+  - id: CMD-002
+    category: CMD
+    description: 명령 치환 $(…)·`…` 안의 시스템 명령
+    keywords: ["$(", "`"]
+    pattern: '(\$\(|`)\s*(sudo\s+)?(cat|ls|id|whoami|uname|pwd|wget|curl|nc|ncat|bash|sh|python[23]?|perl|ping|nslookup|dig|sleep|rm|echo|base64|env|printenv)\b'
+    weight: 6
+    mode: BLOCK
+  - id: CMD-003
+    category: CMD
+    description: 역방향 셸·내려받아 바로 실행
+    keywords: ["/dev/tcp", "/dev/udp", "nc", "bash", "mkfifo", "curl", "wget", "socat"]
+    pattern: '/dev/(tcp|udp)/|\bn(c|cat)\s+(-\w+\s+)*-[a-z]*[ec]\b|\bbash\s+-i\s*[<>]|\bmkfifo\b|\bsocat\b.{0,40}exec|\b(curl|wget)\b[^;&|]{0,200}\|\s*(sudo\s+)?(ba|z|da)?sh\b'
+    weight: 7
+    mode: BLOCK
+  - id: CMD-004
+    category: CMD
+    description: 공백 우회용 셸 변수($IFS)
+    keywords: ["ifs"]
+    pattern: '\$\{?ifs\}?'
+    weight: 5
+    mode: BLOCK
+  - id: CMD-005
+    category: CMD
+    description: 구분자 뒤 Windows 명령(cmd·PowerShell)
+    keywords: [";", "|", "&"]
+    pattern: '[;&|]\s*(type\s+[a-z]:|dir\s+[a-z]:|net\s+(user|localgroup|share)\b|powershell|pwsh|cmd(\.exe)?\s*/[ck]\b|certutil|systeminfo|tasklist|ipconfig|whoami\.exe|bitsadmin|wmic)'
+    weight: 6
+    mode: BLOCK
+  - id: CMD-006
+    category: CMD
+    kind: signal
+    signal: newline_command
+    description: 개행(%0a) 뒤 시스템 명령 — 셸에서는 개행이 구분자
+    weight: 6
+    mode: BLOCK
+
+  # ───────────── 경로 조작·파일 포함 ─────────────
+  # 경로 문자열 하나만으로는 차단하지 않는다('../../components'·'/etc/nginx' 는 정상 글에 흔하다).
+  # 탈출 시퀀스 + 민감 파일, 값 전체가 민감 파일 경로, 위험한 스트림 래퍼일 때 차단 기준에 닿는다.
+  - id: PATH-001
+    category: PATH
+    description: 상위 디렉터리 탈출 2단계 이상(../, ..\, ....//, 오버롱 UTF-8 %c0%af)
+    keywords: [".."]
+    pattern: '(\.{2,4}([/\\]+|\x{fffd}+)){2,}'
+    weight: 4
+    mode: BLOCK
+  - id: PATH-002
+    category: PATH
+    description: 민감 시스템·설정 파일
+    keywords: ["passwd", "shadow", "etc/", "etc\\", "proc/", "win.ini", "boot.ini", "system32", ".ssh", "web-inf", ".htaccess", ".htpasswd", ".env", "var/log"]
+    pattern: 'etc[/\\]+(passwd|shadow|group|hosts|issue|crontab|sudoers)\b|proc[/\\]+self[/\\]+(environ|cmdline|fd|maps|status)|win(dows)?[/\\]+(win\.ini|system\.ini)|boot\.ini|system32[/\\]+(drivers[/\\]+etc|config[/\\]+sam)|\.ssh[/\\]+(id_rsa|id_ed25519|authorized_keys)|web-inf[/\\]+web\.xml|\.ht(access|passwd)\b|(^|[/\\])\.env(\s|$)|var[/\\]+log[/\\]'
+    weight: 4
+    mode: BLOCK
+  - id: PATH-003
+    category: PATH
+    description: 값 전체가 시스템 디렉터리 절대 경로·드라이브 경로·상위 경로로 시작(파일 이름 파라미터 조작)
+    keywords: ["/", "\\", ":"]
+    # '/api/v1/' 같은 URL 경로에는 걸리지 않게 시스템 최상위 디렉터리만 본다.
+    pattern: '^\s*([a-z]:[/\\]|[/\\]+(etc|proc|sys|dev|var|usr|root|home|boot|tmp|opt|srv|windows|winnt|inetpub|program files)[/\\]|\.{2,4}([/\\]|\x{fffd}))'
+    weight: 2
+    mode: BLOCK
+  - id: PATH-004
+    category: PATH
+    description: 파일 포함용 스트림 래퍼(php://filter, phar://, zip://, expect:// 등)
+    keywords: ["://"]
+    pattern: '\b(php|phar|zip|expect|glob|compress\.(zlib|bzip2)|ogg|rar|ssh2(\.\w+)?)://'
+    weight: 6
+    mode: BLOCK
+  - id: PATH-005
+    category: PATH
+    description: file:// 로 로컬 파일 지정
+    keywords: ["file:"]
+    pattern: '\bfile:/{2,3}'
+    weight: 3
+    mode: BLOCK
+
+  # ───────────── 업로드 파일 ─────────────
+  # 파일 이름·Content-Type 이 아니라 실제 바이트(매직 넘버)를 기준으로 본다(src/mpg/gateway/uploads.py).
+  # 텍스트 파일 내용은 '이름#content' 필드로 다른 룰(XSS·SCR·CMD)이 검사한다.
+  - id: FILE-001
+    category: FILE
+    kind: signal
+    signal: upload_script_ext
+    description: 서버에서 실행되는 확장자 업로드(.php .jsp .aspx .cgi .shtml .htaccess 등)
+    weight: 6
+    mode: BLOCK
+  - id: FILE-002
+    category: FILE
+    kind: signal
+    signal: upload_double_ext
+    description: 이중 확장자에 실행 확장자를 숨김(shell.php.jpg)
+    weight: 6
+    mode: BLOCK
+  - id: FILE-003
+    category: FILE
+    kind: signal
+    signal: upload_type_mismatch
+    description: 이미지·문서라고 선언했지만 실제 내용은 HTML·스크립트·실행 파일
+    weight: 6
+    mode: BLOCK
+  - id: FILE-004
+    category: FILE
+    kind: signal
+    signal: upload_embedded_code
+    description: 이미지·PDF 등 바이너리 안에 서버·브라우저 코드(<?php, <script, <%) — 폴리글롯 웹셸
+    weight: 6
+    mode: BLOCK
+  - id: FILE-005
+    category: FILE
+    kind: signal
+    signal: upload_executable
+    description: 실행 파일(ELF·PE·Mach-O) 업로드 — 기본은 기록만, 업로드 경로별로 차단 설정
+    weight: 4
+    mode: DETECT
+
+  # ───────────── 응답 검사(정보 유출) ─────────────
+  # 백엔드 응답 본문(텍스트, 최대 256 KB)에만 쓴다. 파라미터 이름은 '$response' 라서 경로별 임계값·룰 모드·예외를
+  # 요청과 같은 방식으로 걸 수 있다. 룰이 하나라도 걸리면 기록하고, 차단 점수 ≥ 임계값이면 응답을 502로 바꾼다.
+  # DB 오류·스택 트레이스는 5xx 응답일 때만 차단 점수가 넘는다(게시판 글 속 오류 문구 인용은 200 응답이라 기록만).
+  - id: RESP-001
+    category: RESP
+    description: DB 오류 메시지 노출(에러 기반 SQL 인젝션의 신호)
+    keywords: ["sql", "mysql", "ora-", "pg::", "psql", "sqlite", "odbc", "quotation mark", "syntax error at or near"]
+    pattern: 'you have an error in your sql syntax|warning:\s+(mysqli?|pg|oci|sqlite)_|unclosed quotation mark after the character string|quoted string not properly terminated|pg::syntaxerror|org\.postgresql\.util\.psqlexception|syntax error at or near "|sqlite3?\.operationalerror|sqlstate\[\w+\]|\bora-\d{5}\b|microsoft ole db provider for (sql server|odbc)|java\.sql\.sqlexception|com\.mysql\.jdbc'
+    weight: 4
+    mode: BLOCK
+  - id: RESP-002
+    category: RESP
+    description: 스택 트레이스·디버그 정보 노출
+    keywords: ["traceback", "exception", "stack trace", "on line", ".java:", "line "]
+    pattern: 'traceback \(most recent call last\)|exception in thread "|\n\s+at [\w$.<>]+\([\w]+\.java:\d+\)|stack trace:|(fatal error|parse error|warning): .{1,200} in /.{1,200} on line \d+|\bat .{1,200} in .{1,200}:line \d+|werkzeug debugger|django\.core\.exceptions|whitelabel error page'
+    weight: 4
+    mode: BLOCK
+  - id: RESP-003
+    category: RESP
+    description: /etc/passwd 내용 노출(경로 조작 성공)
+    keywords: ["root:"]
+    pattern: 'root:[x*!]?:0:0:'
+    weight: 8
+    mode: BLOCK
+  - id: RESP-004
+    category: RESP
+    description: 개인 키 노출
+    keywords: ["private key"]
+    pattern: '-----begin (rsa |ec |dsa |openssh |encrypted |pgp )?private key( block)?-----'
+    weight: 8
+    mode: BLOCK
+  - id: RESP-005
+    category: RESP
+    description: 클라우드 액세스 키 노출(AWS·GCP 서비스 계정)
+    keywords: ["akia", "asia", "private_key_id"]
+    pattern: '\b(akia|asia)[0-9a-z]{16}\b|"private_key_id"\s*:\s*"[0-9a-f]{40}"'
+    weight: 6
+    mode: BLOCK
+  - id: RESP-006
+    category: RESP
+    description: 디렉터리 목록 노출
+    keywords: ["index of /"]
+    pattern: '<title>\s*index of /|<h1>\s*index of /'
+    weight: 4
+    mode: DETECT
+  - id: RESP-007
+    category: RESP
+    kind: signal
+    signal: response_5xx
+    description: 5xx 오류 응답(다른 RESP 룰과 함께일 때만 점수에 들어감)
+    weight: 2
     mode: BLOCK
 
   # ───────────── 우회 신호(정규화 단계) ─────────────

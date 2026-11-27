@@ -1,15 +1,23 @@
 from __future__ import annotations
 
+from collections import defaultdict
+from dataclasses import replace
 from datetime import datetime
 from typing import Iterable
 
-from .models import Action, Match, Mode, PathThreshold, Rule, RuleException, RuleKind
+from .models import Action, Match, Mode, PathRuleOverride, PathThreshold, Rule, RuleException, RuleKind
 
 
 class RiskScorer:
     def __init__(self, rules: Iterable[Rule], exceptions: Iterable[RuleException], threshold: int,
-                 path_thresholds: Iterable[PathThreshold] = ()) -> None:
+                 path_thresholds: Iterable[PathThreshold] = (),
+                 rule_overrides: Iterable[PathRuleOverride] = ()) -> None:
         self.threshold = threshold
+        by_rule: dict[str, list[PathRuleOverride]] = defaultdict(list)
+        for o in rule_overrides:
+            by_rule[o.rule_id].append(o)
+        self.rule_overrides = {rid: tuple(sorted(v, key=lambda o: o.specificity(), reverse=True))
+                               for rid, v in by_rule.items()}
         self.exceptions = tuple(exceptions)
         # 구체적인 것부터: 정확한 경로 > 접두사, 파라미터 지정 > 경로 전체, 긴 경로 > 짧은 경로
         self.path_thresholds = tuple(sorted(path_thresholds, key=lambda t: t.specificity(), reverse=True))
@@ -27,6 +35,20 @@ class RiskScorer:
                 )
         return out
 
+    def apply_overrides(self, matches: list[Match], path: str, param: str) -> list[Match]:
+        """이 경로·파라미터에 맞는 룰 모드 설정이 있으면 매칭의 모드를 바꾼다(가장 구체적인 하나)."""
+        if not self.rule_overrides:
+            return matches
+        out = []
+        for m in matches:
+            for o in self.rule_overrides.get(m.rule_id, ()):
+                if o.matches(path, param):
+                    if o.mode is not m.mode:
+                        m = replace(m, mode=o.mode, overridden=True)
+                    break
+            out.append(m)
+        return out
+
     def apply_exceptions(
         self, matches: list[Match], path: str, param: str, now: datetime
     ) -> list[Match]:
@@ -35,7 +57,7 @@ class RiskScorer:
         out = []
         for m in matches:
             if any(e.applies(m.rule_id, path, param, now) for e in self.exceptions):
-                m = Match(m.rule_id, m.category, m.field_ref, m.score, m.mode, m.evidence, True)
+                m = replace(m, excepted=True)
             out.append(m)
         return out
 

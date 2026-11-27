@@ -5,7 +5,7 @@ from typing import Iterable
 
 import ahocorasick
 
-from .models import Rule, RuleKind
+from .models import Category, Rule, RuleKind
 
 
 class KeywordPrefilter:
@@ -13,7 +13,7 @@ class KeywordPrefilter:
         self._by_keyword: dict[str, set[str]] = defaultdict(set)
         self._always: set[str] = set()
         for rule in rules:
-            if rule.kind is RuleKind.SIGNAL or not rule.enabled:
+            if rule.kind is RuleKind.SIGNAL or not rule.enabled or rule.category is Category.RESPONSE:
                 continue
             if not rule.keywords:
                 self._always.add(rule.id)

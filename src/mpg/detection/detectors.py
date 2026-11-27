@@ -130,6 +130,19 @@ class ScriptDetector(CategoryDetector):
     category = Category.SCRIPT
 
 
+class CommandDetector(CategoryDetector):
+    category = Category.COMMAND
+
+
+class PathDetector(CategoryDetector):
+    category = Category.PATH
+
+
+class ResponseDetector(CategoryDetector):
+    """백엔드 응답 본문 검사(정보 유출). 요청 파이프라인에서는 쓰지 않는다."""
+    category = Category.RESPONSE
+
+
 def _match(rule: Rule, field_ref: str, evidence: str) -> Match:
     return Match(
         rule_id=rule.id,

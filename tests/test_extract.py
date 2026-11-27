@@ -59,7 +59,7 @@ def test_form_and_multipart():
     refs = by_ref(req(body, "multipart/form-data; boundary=XX"))
     assert refs["multipart.note"] == "<svg onload=x>"
     assert refs["multipart.f#filename"] == "a.php"
-    assert "BINARY" not in refs.values()
+    assert refs["multipart.f#content"] == "BINARY"  # 텍스트로 읽히는 파일은 내용도 검사한다
     with pytest.raises(BadRequest):
         req(b"garbage", "multipart/form-data; boundary=XX")
 
@@ -87,3 +87,18 @@ def test_masking():
     long = "가나다 " * 250 + "<script>alert(1)</script>" + " 라마바" * 250
     s = make_sample("json", "c", long, "<script>alert(1)</script>")
     assert len(s) == 256 and "<script>" in s
+
+
+def test_too_many_percent_escapes_is_400():
+    import pytest
+
+    from mpg.gateway.extract import BadRequest, RawRequest, build_inspection
+    body = ("content=" + "%EA%B0%80" * 40_000).encode()  # '%' 12만 개
+    raw = RawRequest("POST", "/api/qna/posts", "", [("content-type", "application/x-www-form-urlencoded")], body)
+    with pytest.raises(BadRequest):
+        build_inspection(raw)
+    assert build_inspection(raw, max_pct_escapes=200_000).fields  # 상한을 올리면 통과
+    small = RawRequest("POST", "/x", "q=%41%42", [], b"")
+    assert build_inspection(small, max_pct_escapes=2).fields
+    with pytest.raises(BadRequest):
+        build_inspection(small, max_pct_escapes=1)

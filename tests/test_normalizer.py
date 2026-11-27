@@ -80,3 +80,47 @@ def test_steps_are_recorded_for_console():
 @pytest.mark.parametrize("value", ["/*" * 50_000, "%" * 100_000, "&" * 100_000, "\\x" * 50_000])
 def test_pathological_inputs_finish(value):
     N.normalize(value, Location.JSON)
+
+
+def _old_url_decode(value, location, max_rounds=3):
+    """바꾸기 전 반복 규칙('%'가 있으면 일단 unquote). 새 규칙과 결과가 같아야 한다."""
+    from urllib.parse import unquote, unquote_plus
+
+    from mpg.detection.models import PLUS_AS_SPACE
+    from mpg.detection.normalizer import PCT_U, _pct_u
+    text, rounds = value, 0
+    for i in range(max_rounds):
+        if "%" not in text and not (i == 0 and location in PLUS_AS_SPACE and "+" in text):
+            break
+        decoded = PCT_U.sub(_pct_u, text) if "%u" in text or "%U" in text else text
+        decoded = unquote_plus(decoded, errors="replace") if i == 0 and location in PLUS_AS_SPACE \
+            else unquote(decoded, errors="replace")
+        if decoded == text:
+            break
+        text, rounds = decoded, rounds + 1
+    return text, rounds
+
+
+def test_url_decode_shortcut_matches_previous_rule():
+    import random
+
+    from mpg.detection.models import Location
+    from mpg.detection.normalizer import Normalizer
+    n = Normalizer()
+    parts = ["%", "%%", "%2", "%25", "%2525", "%41", "%u0041", "%U0041", "%eb%85%b8", "%zz", "+", "a", "가", "%ff"]
+    rnd = random.Random(7)
+    for _ in range(20000):
+        v = "".join(rnd.choice(parts) for _ in range(rnd.randint(0, 10)))
+        for loc in (Location.QUERY, Location.JSON):
+            assert n._url_decode(v, loc) == _old_url_decode(v, loc), (v, loc)
+
+
+def test_megabyte_of_bare_percent_signs_is_cheap():
+    import time
+
+    from mpg.detection.models import Location
+    from mpg.detection.normalizer import Normalizer
+    v = "%" * (1 << 20)
+    t = time.perf_counter()
+    Normalizer().normalize(v, Location.QUERY)
+    assert (time.perf_counter() - t) < 0.1  # 이전에는 unquote 한 번에 0.3~0.6 s

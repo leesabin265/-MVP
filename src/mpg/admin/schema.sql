@@ -1,4 +1,4 @@
--- MPG 스키마 (테이블 9개: 기획서 8개 + path_thresholds). 멱등: 여러 번 실행해도 안전.
+-- MPG 스키마 (테이블 10개: 기획서 8개 + path_thresholds + path_rule_overrides). 멱등: 여러 번 실행해도 안전.
 -- 역할: mpg_admin(admin-api, 소유자 아님), mpg_gateway(읽기 전용, policy_versions만).
 
 CREATE TABLE IF NOT EXISTS admin_users (
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- 작업본(draft). 발행하면 policy_versions.snapshot 으로 굳는다.
 CREATE TABLE IF NOT EXISTS rules (
     id           TEXT PRIMARY KEY CHECK (id ~ '^[A-Z]{2,5}-[0-9]{3}$'),
-    category     TEXT NOT NULL CHECK (category IN ('SQLI', 'XSS', 'SCR', 'ENC')),
+    category     TEXT NOT NULL CHECK (category IN ('SQLI', 'XSS', 'SCR', 'CMD', 'PATH', 'FILE', 'RESP', 'ENC')),
     kind         TEXT NOT NULL DEFAULT 'regex' CHECK (kind IN ('regex', 'signal', 'analyzer')),
     pattern      TEXT,
     keywords     TEXT[] NOT NULL DEFAULT '{}',
@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS rules (
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_by   TEXT
 );
+
+-- 기존 배포 업그레이드: 분류 CMD·PATH·FILE·RESP 추가
+ALTER TABLE rules DROP CONSTRAINT IF EXISTS rules_category_check;
+ALTER TABLE rules ADD CONSTRAINT rules_category_check
+    CHECK (category IN ('SQLI', 'XSS', 'SCR', 'CMD', 'PATH', 'FILE', 'RESP', 'ENC'));
 
 CREATE TABLE IF NOT EXISTS rule_exceptions (
     id                 SERIAL PRIMARY KEY,
@@ -58,6 +63,21 @@ CREATE TABLE IF NOT EXISTS path_thresholds (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS path_thresholds_unique_active
     ON path_thresholds(path, coalesce(param, ''), prefix) WHERE active;
+
+CREATE TABLE IF NOT EXISTS path_rule_overrides (
+    id          SERIAL PRIMARY KEY,
+    path        TEXT NOT NULL CHECK (path LIKE '/%' AND path !~ '[*?]'),
+    param       TEXT CHECK (param IS NULL OR (param <> '' AND param !~ '[*?]')),
+    prefix      BOOLEAN NOT NULL DEFAULT FALSE,
+    rule_id     TEXT NOT NULL REFERENCES rules(id),
+    mode        TEXT NOT NULL CHECK (mode IN ('BLOCK', 'DETECT')),
+    reason      TEXT NOT NULL DEFAULT '',
+    active      BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by  TEXT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS path_rule_overrides_unique_active
+    ON path_rule_overrides(path, coalesce(param, ''), prefix, rule_id) WHERE active;
 
 CREATE TABLE IF NOT EXISTS policy_versions (
     version       INT PRIMARY KEY,
@@ -143,14 +163,14 @@ DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mpg_admin') THEN
         GRANT SELECT, INSERT, UPDATE, DELETE ON admin_users, rules, rule_exceptions, policy_versions,
-            regression_runs, security_events, event_matches, path_thresholds TO mpg_admin;
+            regression_runs, security_events, event_matches, path_thresholds, path_rule_overrides TO mpg_admin;
         GRANT SELECT, INSERT ON audit_log TO mpg_admin;
         REVOKE UPDATE, DELETE, TRUNCATE ON audit_log FROM mpg_admin;
         GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO mpg_admin;
     END IF;
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mpg_gateway') THEN
         REVOKE ALL ON admin_users, rules, rule_exceptions, regression_runs, security_events,
-            event_matches, audit_log, path_thresholds FROM mpg_gateway;
+            event_matches, audit_log, path_thresholds, path_rule_overrides FROM mpg_gateway;
         GRANT SELECT ON policy_versions TO mpg_gateway;
     END IF;
 END $$;

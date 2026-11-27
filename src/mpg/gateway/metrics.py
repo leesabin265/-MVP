@@ -26,6 +26,8 @@ POLICY_RELOADS = Counter("mpg_gateway_policy_reloads_total", "정책 리로드",
 EVENTS_DROPPED = Counter("mpg_gateway_events_dropped_total", "버퍼 초과로 버린 이벤트")
 EVENTS_SENT = Counter("mpg_gateway_events_sent_total", "Redis에 기록한 이벤트")
 EVENT_BUFFER = Gauge("mpg_gateway_event_buffer", "전송 대기 이벤트 수", multiprocess_mode="livesum")
+RESPONSE_INSPECTION = Histogram("mpg_gateway_response_inspection_seconds", "응답 검사 시간", buckets=BUCKETS)
+RESPONSE_VERDICTS = Counter("mpg_gateway_response_verdicts_total", "응답 검사 판정", ["action"])
 INTERNAL_ERRORS = Counter("mpg_gateway_internal_errors_total", "검사 중 예외(Fail-Closed)")
 
 
