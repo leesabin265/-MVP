@@ -61,10 +61,14 @@ async def draft_snapshot(conn, threshold: int | None = None) -> dict[str, Any]:
         active = await active_version(conn)
         threshold = active["snapshot"].get("threshold", 6) if active else 6
     pts = await conn.fetch("SELECT id, path, param, prefix, threshold FROM path_thresholds WHERE active ORDER BY id")
+    ovs = await conn.fetch("SELECT id, path, param, prefix, rule_id, mode FROM path_rule_overrides"
+                           " WHERE active ORDER BY id")
     return {
         "threshold": threshold,
         "path_thresholds": [{"id": str(t["id"]), "path": t["path"], "param": t["param"],
                              "prefix": t["prefix"], "threshold": t["threshold"]} for t in pts],
+        "rule_overrides": [{"id": str(o["id"]), "path": o["path"], "param": o["param"], "prefix": o["prefix"],
+                            "rule_id": o["rule_id"], "mode": o["mode"]} for o in ovs],
         "rules": [_rule_row_to_dict(r) for r in rules],
         "exceptions": [{"id": str(e["id"]), "rule_id": e["rule_id"], "path": e["path"],
                         "param": e["param"], "expires_at": e["expires_at"].isoformat()} for e in excs],
@@ -109,6 +113,15 @@ def diff_snapshots(draft: dict, active: dict | None) -> list[dict[str, str]]:
             out.append({"type": "path_threshold", "id": tid, "change": "removed"})
         elif a_pt[tid] != d_pt[tid]:
             out.append({"type": "path_threshold", "id": tid, "change": "modified"})
+    a_ov = {str(o["id"]): o for o in active.get("rule_overrides", [])}
+    d_ov = {str(o["id"]): o for o in draft.get("rule_overrides", [])}
+    for oid in sorted(set(a_ov) | set(d_ov), key=int):
+        if oid not in a_ov:
+            out.append({"type": "rule_override", "id": oid, "change": "added"})
+        elif oid not in d_ov:
+            out.append({"type": "rule_override", "id": oid, "change": "removed"})
+        elif a_ov[oid] != d_ov[oid]:
+            out.append({"type": "rule_override", "id": oid, "change": "modified"})
     if draft.get("threshold") != active.get("threshold"):
         out.append({"type": "policy", "id": "threshold", "change": "modified"})
     return out
@@ -301,6 +314,10 @@ async def _restore_working_copy(conn, snap: dict, actor: str) -> None:
     keep_pt = [int(t["id"]) for t in snap.get("path_thresholds", []) if t.get("id") is not None]
     await conn.execute("UPDATE path_thresholds SET active = false WHERE active AND NOT (id = ANY($1::int[]))", keep_pt)
     await conn.execute("UPDATE path_thresholds SET active = true WHERE id = ANY($1::int[])", keep_pt)
+    keep_ov = [int(o["id"]) for o in snap.get("rule_overrides", []) if o.get("id") is not None]
+    await conn.execute("UPDATE path_rule_overrides SET active = false WHERE active AND NOT (id = ANY($1::int[]))",
+                       keep_ov)
+    await conn.execute("UPDATE path_rule_overrides SET active = true WHERE id = ANY($1::int[])", keep_ov)
 
 
 async def upsert_rule(conn, d: dict, actor: str) -> None:
@@ -360,7 +377,7 @@ def verdict_detail(v) -> dict:
         "candidates": list(f.candidates) if f else [],
         "matches": [{"rule_id": m.rule_id, "category": m.category.value, "field_ref": m.field_ref,
                      "score": m.score, "mode": m.mode.value, "excepted": m.excepted,
-                     "evidence": m.evidence} for m in v.matches],
+                     "overridden": m.overridden, "evidence": m.evidence} for m in v.matches],
         "elapsed_ms": round(v.elapsed_ms, 3),
     }
 

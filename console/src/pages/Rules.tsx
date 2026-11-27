@@ -9,7 +9,7 @@ type Rule = {
   updated_by: string | null; published: boolean; dirty: boolean;
 };
 
-const CATS = ["SQLI", "XSS", "SCR", "ENC"];
+const CATS = ["SQLI", "XSS", "SCR", "CMD", "PATH", "FILE", "RESP", "ENC"];
 
 export default function Rules({ ctx }: { ctx: Ctx }) {
   const { data, error, reload } = useLoad(() => api.get<Rule[]>("/rules"));

@@ -1,27 +1,27 @@
 {
   "policy_version": 1,
-  "attack_total": 2081,
-  "normal_total": 1000,
+  "attack_total": 2286,
+  "normal_total": 1068,
   "detection_rate": 1.0,
-  "block_rate": 0.9875,
-  "fp_rate": 0.0,
+  "block_rate": 0.993,
+  "fp_rate": 0.0037,
   "block_fp_rate": 0.0,
   "blocked_fp": 0,
-  "detected": 2081,
-  "blocked": 2055,
-  "false_positives": 0,
+  "detected": 2286,
+  "blocked": 2270,
+  "false_positives": 4,
   "by_variant": {
     "raw": {
-      "total": 158,
-      "detected": 158
+      "total": 210,
+      "detected": 210
     },
     "url": {
-      "total": 158,
-      "detected": 158
+      "total": 210,
+      "detected": 210
     },
     "double-url": {
-      "total": 158,
-      "detected": 158
+      "total": 210,
+      "detected": 210
     },
     "mixed-case": {
       "total": 157,
@@ -32,24 +32,24 @@
       "detected": 70
     },
     "plus": {
-      "total": 70,
-      "detected": 70
+      "total": 84,
+      "detected": 84
     },
     "fullwidth": {
       "total": 129,
       "detected": 129
     },
     "tab": {
-      "total": 70,
-      "detected": 70
+      "total": 92,
+      "detected": 92
     },
     "newline": {
       "total": 130,
       "detected": 130
     },
     "unicode-u": {
-      "total": 158,
-      "detected": 158
+      "total": 171,
+      "detected": 171
     },
     "url+mixed": {
       "total": 157,
@@ -89,6 +89,51 @@
     }
   },
   "misses": [],
-  "false_positive_list": [],
-  "elapsed_ms": 206.9
+  "false_positive_list": [
+    {
+      "path": "/api/qna/posts",
+      "param": "content",
+      "variant": "question",
+      "payload": "C# HTTP 요청 예제 코드가 이상해요:\ncurl -X POST -H 'Content-Type: application/json' https://api.example.com/v1/items",
+      "action": "DETECT_ONLY",
+      "score": 6,
+      "rules": [
+        "CMD-006"
+      ]
+    },
+    {
+      "path": "/api/qna/posts",
+      "param": "content",
+      "variant": "question",
+      "payload": "CORS policy 오류 가 계속 떠서 서버가 재시작돼요\n이 코드 리뷰 부탁드려요\ncurl -X POST -H 'Content-Type: application/json' https://api.example.com/v1/items",
+      "action": "DETECT_ONLY",
+      "score": 6,
+      "rules": [
+        "CMD-006"
+      ]
+    },
+    {
+      "path": "/api/qna/posts",
+      "param": "content",
+      "variant": "question",
+      "payload": "이 코드 리뷰 부탁드려요\nfn main() { println!(\"hello\"); }\n이 코드 리뷰 부탁드려요\ncurl -X POST -H 'Content-Type: application/json' https://api.example.com/v1/items",
+      "action": "DETECT_ONLY",
+      "score": 6,
+      "rules": [
+        "CMD-006"
+      ]
+    },
+    {
+      "path": "/api/qna/posts",
+      "param": "content",
+      "variant": "question",
+      "payload": "C++ 날짜 변환 예제 코드가 이상해요:\ncurl -X POST -H 'Content-Type: application/json' https://api.example.com/v1/items\nRust에서 Segmentation fault 에러가 나요. 어떻게 해결하나요?",
+      "action": "DETECT_ONLY",
+      "score": 6,
+      "rules": [
+        "CMD-006"
+      ]
+    }
+  ],
+  "elapsed_ms": 1030.8
 }

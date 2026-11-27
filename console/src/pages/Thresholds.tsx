@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { api, atLeast, errorText, fmtTime } from "../api";
 import type { Ctx } from "../App";
 import { Empty, useLoad } from "../ui";
+import RuleOverrides from "./RuleOverrides";
 
 type Item = {
   id: number; path: string; param: string | null; prefix: boolean; threshold: number; reason: string;
@@ -94,12 +95,14 @@ export default function Thresholds({ ctx }: { ctx: Ctx }) {
           {err && <div className="error">{err}</div>}
           <div className="row"><button className="btn primary">저장</button></div>
           <p className="small muted">
-            측정 예: /api/qna/posts · content 를 8로 하면 기술 Q&A 차단 오탐 4/40 → 0/40, 이 경로 공격 차단율 98.2% → 92.5% (탐지율 100% 유지).
+            측정 예: /api/qna/posts · content 를 8로 하면 기술 Q&A 차단 오탐 4/40 → 0/40, 이 경로 공격 차단율 98.2% → 92.5% (탐지율 100% 유지). 아래 경로별 룰 모드와 함께 쓰면 차단율 손실을 줄일 수 있습니다.
           </p>
         </form>
       ) : (
         <p className="muted small">임계값 추가·삭제는 ADMIN만 할 수 있습니다.</p>
       )}
+
+      <RuleOverrides ctx={ctx} />
     </div>
   );
 }

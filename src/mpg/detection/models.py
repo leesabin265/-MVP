@@ -14,6 +14,7 @@ class Location(str, Enum):
     JSON = "json"
     MULTIPART = "multipart"
     BODY = "body"
+    RESPONSE = "response"
 
 
 PLUS_AS_SPACE = {Location.QUERY, Location.FORM}
@@ -40,6 +41,10 @@ class Category(str, Enum):
     SQLI = "SQLI"
     XSS = "XSS"
     SCRIPT = "SCR"
+    COMMAND = "CMD"
+    PATH = "PATH"
+    FILE = "FILE"
+    RESPONSE = "RESP"
     ENCODING = "ENC"
 
 
@@ -48,6 +53,7 @@ class Field:
     location: Location
     name: str
     value: str
+    signals: frozenset[str] = frozenset()
 
     @property
     def ref(self) -> str:
@@ -118,12 +124,32 @@ class PathThreshold:
 
 
 @dataclass(frozen=True)
+class PathRuleOverride:
+    """경로(·파라미터)에서만 룰 하나의 모드를 바꾼다(경로별 룰 그룹).
+
+    DETECT로 낮추면 그 룰은 이 경로에서 차단 점수에 들어가지 않고 기록만 된다.
+    BLOCK으로 올리면 전역에서는 탐지만 하는 룰이 이 경로에서는 차단 점수에 들어간다.
+    한 룰에 여러 설정이 겹치면 PathThreshold와 같은 순서로 가장 구체적인 하나만 적용한다.
+    """
+    path: str
+    rule_id: str
+    mode: Mode
+    param: str | None = None
+    prefix: bool = False
+    id: str | None = None
+
+    matches = PathThreshold.matches
+    specificity = PathThreshold.specificity
+
+
+@dataclass(frozen=True)
 class Policy:
     version: int
     rules: tuple[Rule, ...]
     exceptions: tuple[RuleException, ...] = ()
     threshold: int = 6
     path_thresholds: tuple[PathThreshold, ...] = ()
+    rule_overrides: tuple[PathRuleOverride, ...] = ()
 
 
 @dataclass
@@ -144,6 +170,7 @@ class Match:
     mode: Mode
     evidence: str
     excepted: bool = False
+    overridden: bool = False
 
 
 @dataclass

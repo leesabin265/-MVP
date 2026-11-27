@@ -6,7 +6,7 @@ import { ActionBadge, Code, ModeBadge } from "../ui";
 type Verdict = {
   action: string; risk_score: number; policy_version: number; threshold: number; detect_threshold: number; steps: { name: string; value: string }[];
   signals: string[]; candidates: string[]; elapsed_ms: number;
-  matches: { rule_id: string; category: string; score: number; mode: string; excepted: boolean; evidence: string }[];
+  matches: { rule_id: string; category: string; score: number; mode: string; excepted: boolean; overridden?: boolean; evidence: string }[];
 };
 
 const SAMPLES = [
@@ -86,7 +86,7 @@ export default function Sandbox({ ctx }: { ctx: Ctx }) {
             <tbody>
               {v.matches.map((m, i) => (
                 <tr key={i} className={m.excepted ? "struck" : ""}>
-                  <td className="mono">{m.rule_id}</td><td>{m.category}</td><td><ModeBadge mode={m.mode} /></td>
+                  <td className="mono">{m.rule_id}</td><td>{m.category}</td><td><ModeBadge mode={m.mode} />{m.overridden && <span className="badge gray" title="경로별 룰 모드로 바뀐 모드">경로 설정</span>}</td>
                   <td className="num">{m.excepted ? "예외" : `+${m.score}`}</td><td><Code>{m.evidence}</Code></td>
                 </tr>
               ))}

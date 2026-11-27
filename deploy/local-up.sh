@@ -42,13 +42,13 @@ docker compose up -d --build
 echo "상태 확인 중…"
 i=0
 while :; do
-  bad=$(docker compose ps --format '{{.Service}} {{.Health}}' gateway admin-api admin-console 2>/dev/null \
+  bad=$(docker compose ps --format '{{.Service}} {{.Health}}' gateway edge-lb admin-api admin-console 2>/dev/null \
         | awk '$2 != "healthy"' | wc -l | tr -d ' ')
   [ "$bad" = "0" ] && break
   i=$((i + 1))
   if [ "$i" -gt 90 ]; then
     docker compose ps
-    die "3분 안에 정상 상태가 되지 않았습니다. 'docker compose logs init admin-api gateway' 로 원인을 확인하세요."
+    die "3분 안에 정상 상태가 되지 않았습니다. 'docker compose logs init admin-api gateway edge-lb' 로 원인을 확인하세요."
   fi
   sleep 2
 done
@@ -62,7 +62,7 @@ fi
 cat <<EOF
 
 로컬 서버가 준비됐습니다.
-  게이트웨이     https://localhost:${GATEWAY_PORT}/      (뒤에 데모 백엔드)
+  게이트웨이     https://localhost:${GATEWAY_PORT}/      (로드밸런서 → 게이트웨이 ${GATEWAY_REPLICAS:-2}대 → 데모 백엔드)
   관리자 콘솔    https://localhost:${CONSOLE_PORT}/
   아이디         admin
   비밀번호       deploy/secrets/initial_admin_password 파일 내용

@@ -3,14 +3,19 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from email.parser import BytesHeaderParser
 from urllib.parse import unquote_plus
 
 from mpg.detection.models import Field, InspectionRequest, Location
 
+from .uploads import inspect_upload
+
 INSPECTED_HEADERS = ("user-agent", "referer")
 JSON_MAX_DEPTH = 32
 MAX_FIELDS = 2000
+# 요청 전체의 '%' 개수 상한. 퍼센트 디코딩은 순수 Python(urllib)이라 1 MB가 전부 이스케이프면 100~300 ms가 든다.
+# 백엔드와 다른 디코더를 쓰면 그 차이가 우회 경로가 되므로 디코더는 바꾸지 않고 입력 크기를 제한한다.
+# 10만 개 ≈ URL 인코딩된 한글 3만 3천 자(폼 본문 약 300 KB). 점수가 아니라 파서 제한이라 경로별 설정으로 풀 수 없다.
+MAX_PCT_ESCAPES = 100_000
 
 
 class BadRequest(Exception):
@@ -75,6 +80,17 @@ def _parse_json(body: bytes, fields: list[Field]) -> None:
     _json_fields(obj, "", 0, fields)
 
 
+def _part_headers(head: bytes) -> dict[str, str]:
+    """파트 헤더를 UTF-8로 읽는다. 브라우저는 한글 파일 이름을 인코딩 없이 UTF-8 그대로 보낸다
+    (email 파서는 이때 Header 객체를 돌려줘 예외가 났고, Fail-Closed라 한글 이름 업로드가 전부 403이 됐다)."""
+    out: dict[str, str] = {}
+    for line in head.decode("utf-8", "replace").split("\r\n"):
+        name, sep, value = line.partition(":")
+        if sep and name.strip():
+            out.setdefault(name.strip().lower(), value.strip())
+    return out
+
+
 def _parse_multipart(body: bytes, content_type: str, fields: list[Field]) -> None:
     from python_multipart.multipart import parse_options_header
 
@@ -88,7 +104,6 @@ def _parse_multipart(body: bytes, content_type: str, fields: list[Field]) -> Non
     parts = body.split(delim)
     if not parts[-1].startswith(b"--") and not parts[-1].strip() == b"":
         raise BadRequest("multipart not terminated")
-    hp = BytesHeaderParser()
     for part in parts[1:]:
         if part.startswith(b"--"):
             break
@@ -98,7 +113,7 @@ def _parse_multipart(body: bytes, content_type: str, fields: list[Field]) -> Non
             raise BadRequest("malformed multipart part")
         if content.endswith(b"\r\n"):
             content = content[:-2]
-        headers = hp.parsebytes(head)
+        headers = _part_headers(head)
         disp = headers.get("content-disposition", "")
         if not disp.lower().startswith("form-data"):
             raise BadRequest("multipart part without form-data disposition")
@@ -106,12 +121,16 @@ def _parse_multipart(body: bytes, content_type: str, fields: list[Field]) -> Non
         name = dparams.get(b"name", b"").decode("utf-8", "replace")
         filename = dparams.get(b"filename")
         if filename is not None:
-            fields.append(Field(Location.MULTIPART, f"{name}#filename", filename.decode("utf-8", "replace")))
+            fname = filename.decode("utf-8", "replace")
+            signals, text = inspect_upload(fname, headers.get("content-type", ""), content)
+            fields.append(Field(Location.MULTIPART, f"{name}#filename", fname, frozenset(signals)))
+            if text is not None:
+                fields.append(Field(Location.MULTIPART, f"{name}#content", text))
             continue
         fields.append(Field(Location.MULTIPART, name, _decode(content)))
 
 
-def build_inspection(req: RawRequest) -> InspectionRequest:
+def build_inspection(req: RawRequest, max_pct_escapes: int = MAX_PCT_ESCAPES) -> InspectionRequest:
     fields: list[Field] = []
     seen: dict[str, int] = {}
 
@@ -150,6 +169,8 @@ def build_inspection(req: RawRequest) -> InspectionRequest:
 
     if len(fields) > MAX_FIELDS:
         raise BadRequest("too many fields")
+    if max_pct_escapes and sum(f.value.count("%") for f in fields) > max_pct_escapes:
+        raise BadRequest("too many percent escapes")
     dups = frozenset(k for k, n in seen.items() if n > 1)
     path = req.raw_path.split("?", 1)[0]
     from urllib.parse import unquote

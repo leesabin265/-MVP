@@ -8,7 +8,7 @@ const RATE = Number(__ENV.RATE || 300);
 const DURATION = __ENV.DURATION || "10m";
 const DIRECT_DURATION = __ENV.DIRECT_DURATION || "3m";
 const TARGET = __ENV.TARGET || "both";
-const DIRECT = __ENV.DIRECT_URL || "http://backend:9000";
+const DIRECT = __ENV.DIRECT_URL || "https://backend:9443";
 const GATEWAY = __ENV.GATEWAY_URL || "https://gateway:8443";
 
 function scenario(name, base, duration, startTime) {

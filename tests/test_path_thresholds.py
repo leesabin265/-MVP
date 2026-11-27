@@ -108,7 +108,8 @@ def test_rules_file_ships_board_threshold(policy):
 
 
 def test_board_threshold_removes_hard_false_positives_without_losing_detection(policy):
-    policy = replace(policy, path_thresholds=())
+    # 게시판 설정(임계값 8 + XSS-004 차단)을 모두 뺀 전역 기본값과, 임계값 8만 준 경우를 비교한다.
+    policy = replace(policy, path_thresholds=(), rule_overrides=())
     attacks = load_samples(ROOT / "datasets" / "attack.jsonl")
     normals = load_samples(ROOT / "datasets" / "normal.jsonl")
     hard = load_samples(ROOT / "datasets" / "normal_hard.jsonl")

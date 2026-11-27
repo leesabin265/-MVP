@@ -26,7 +26,14 @@ from mpg.common.config import (
     redis_url,
 )
 from mpg.common.logging import setup_logging
-from mpg.detection.rules import RuleError, exception_from_dict, path_threshold_from_dict, rule_from_dict
+from mpg.detection.rules import (
+    RuleError,
+    exception_from_dict,
+    load_rules,
+    path_threshold_from_dict,
+    rule_from_dict,
+    rule_override_from_dict,
+)
 
 from . import alerts as alerts_mod
 from . import auth
@@ -59,7 +66,7 @@ class LoginIn(BaseModel):
 
 class RuleIn(BaseModel):
     id: str
-    category: Literal["SQLI", "XSS", "SCR", "ENC"]
+    category: Literal["SQLI", "XSS", "SCR", "CMD", "PATH", "FILE", "RESP", "ENC"]
     kind: Literal["regex", "signal", "analyzer"] = "regex"
     pattern: str | None = PField(default=None, max_length=2000)
     keywords: list[str] = PField(default_factory=list, max_length=50)
@@ -77,7 +84,7 @@ class RulePatch(BaseModel):
     weight: int | None = PField(default=None, ge=1, le=10)
     description: str | None = PField(default=None, max_length=500)
     enabled: bool | None = None
-    category: Literal["SQLI", "XSS", "SCR", "ENC"] | None = None
+    category: Literal["SQLI", "XSS", "SCR", "CMD", "PATH", "FILE", "RESP", "ENC"] | None = None
 
 
 class ModeIn(BaseModel):
@@ -99,6 +106,15 @@ class PathThresholdIn(BaseModel):
     param: str | None = PField(default=None, max_length=256)
     prefix: bool = False
     threshold: int = PField(ge=1, le=20)
+    reason: str = PField(min_length=5, max_length=500)
+
+
+class RuleOverrideIn(BaseModel):
+    path: str = PField(min_length=1, max_length=512)
+    param: str | None = PField(default=None, max_length=256)
+    prefix: bool = False
+    rule_id: str = PField(min_length=1, max_length=16)
+    mode: Literal["BLOCK", "DETECT"]
     reason: str = PField(min_length=5, max_length=500)
 
 
@@ -366,7 +382,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await audit(conn, sess.login_id, "event.view", str(request_id), client_ip=request.state.ip)
         loc, _, name = e["field_ref"].partition(".")
         recomputed = None
-        if policy and e["masked_sample"] != "[redacted]":
+        # 응답에서 찾은 유출은 원문을 저장하지 않아 재계산할 수 없다.
+        if policy and e["masked_sample"] not in ("[redacted]", "[response redacted]") and loc != "response":
             try:
                 recomputed = ps.sandbox(policy, e["masked_sample"], loc, e["path"], name)
             except ps.PolicyError:
@@ -604,6 +621,59 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 if not r:
                     raise HTTPException(404, {"error": "not_found"})
                 await audit(conn, sess.login_id, "threshold.deactivate", str(tid), dict(r), None,
+                            client_ip=request.state.ip)
+            return {"ok": True, "unpublished_changes": await _changes_count(conn)}
+
+    # ── 경로별 룰 모드 ──
+    @api.get("/rule-overrides")
+    async def overrides_list(sess: auth.Session = Depends(viewer), include_inactive: bool = False):
+        async with st["pool"].acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT o.*, r.mode AS global_mode, r.weight, r.description FROM path_rule_overrides o"
+                " JOIN rules r ON r.id = o.rule_id"
+                + ("" if include_inactive else " WHERE o.active") + " ORDER BY o.id DESC")
+            active = await ps.active_version(conn)
+        published = {str(o["id"]) for o in (active["snapshot"] if active else {}).get("rule_overrides", [])}
+        return [{
+            "id": r["id"], "path": r["path"], "param": r["param"], "prefix": r["prefix"],
+            "rule_id": r["rule_id"], "mode": r["mode"], "global_mode": r["global_mode"], "weight": r["weight"],
+            "description": r["description"], "reason": r["reason"], "active": r["active"],
+            "created_by": r["created_by"], "created_at": r["created_at"].isoformat(),
+            "published": str(r["id"]) in published,
+        } for r in rows]
+
+    @api.post("/rule-overrides", status_code=201)
+    async def overrides_create(body: RuleOverrideIn, request: Request, sess: auth.Session = Depends(admin)):
+        param = body.param.strip() if body.param and body.param.strip() else None
+        async with st["pool"].acquire() as conn:
+            async with conn.transaction():
+                rule_rows = await conn.fetch("SELECT * FROM rules")
+                rules = load_rules(ps._rule_row_to_dict(r) for r in rule_rows)
+                rule_override_from_dict({"path": body.path, "param": param, "prefix": body.prefix,
+                                         "rule_id": body.rule_id, "mode": body.mode}, rules, strict=True)
+                dup = await conn.fetchval(
+                    "SELECT id FROM path_rule_overrides WHERE active AND path=$1 AND coalesce(param,'')=$2"
+                    " AND prefix=$3 AND rule_id=$4", body.path, param or "", body.prefix, body.rule_id)
+                if dup:
+                    raise HTTPException(409, {"error": "override_exists", "id": dup})
+                oid = await conn.fetchval(
+                    "INSERT INTO path_rule_overrides(path, param, prefix, rule_id, mode, reason, created_by)"
+                    " VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+                    body.path, param, body.prefix, body.rule_id, body.mode, body.reason, sess.login_id)
+                await audit(conn, sess.login_id, "rule_override.create", str(oid), None,
+                            {"path": body.path, "param": param, "prefix": body.prefix,
+                             "rule_id": body.rule_id, "mode": body.mode}, body.reason, request.state.ip)
+            return {"id": oid, "unpublished_changes": await _changes_count(conn)}
+
+    @api.delete("/rule-overrides/{oid}")
+    async def overrides_delete(oid: int, request: Request, sess: auth.Session = Depends(admin)):
+        async with st["pool"].acquire() as conn:
+            async with conn.transaction():
+                r = await conn.fetchrow("UPDATE path_rule_overrides SET active=false WHERE id=$1 AND active"
+                                        " RETURNING path, param, prefix, rule_id, mode", oid)
+                if not r:
+                    raise HTTPException(404, {"error": "not_found"})
+                await audit(conn, sess.login_id, "rule_override.deactivate", str(oid), dict(r), None,
                             client_ip=request.state.ip)
             return {"ok": True, "unpublished_changes": await _changes_count(conn)}
 

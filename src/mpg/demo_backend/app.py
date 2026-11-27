@@ -112,6 +112,32 @@ async def slow(seconds: float = 6.0):
     return {"slept": seconds}
 
 
+@app.get("/api/demo/legacy-report")
+async def legacy_report(name: str = ""):
+    """일부러 넣은 '오래된 취약 화면' 흉내: 입력이 이상하면 DB 오류 원문을 500으로 내보낸다(응답 검사 시연용)."""
+    if "'" in name or '"' in name:
+        return HTMLResponse(
+            "<h1>500</h1><pre>You have an error in your SQL syntax; check the manual that corresponds to your "
+            "MySQL server version for the right syntax to use near '" + html.escape(name[:40]) + "' at line 1</pre>",
+            status_code=500)
+    return {"report": name, "rows": 0}
+
+
+DEMO_LEAKS = {
+    "passwd": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n",
+    "key": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA\n-----END OPENSSH PRIVATE KEY-----\n",
+    "trace": 'Traceback (most recent call last):\n  File "/app/report.py", line 12, in render\nKeyError: \'x\'\n',
+}
+
+
+@app.get("/api/demo/file")
+async def demo_file(kind: str = "readme"):
+    """경로 조작이 '성공한' 백엔드 흉내: 민감 파일 내용이 응답으로 새는 상황(응답 검사 시연용, 가짜 데이터)."""
+    if kind in DEMO_LEAKS:
+        return HTMLResponse(f"<pre>{DEMO_LEAKS[kind]}</pre>", status_code=500 if kind == "trace" else 200)
+    return HTMLResponse("<pre>README: 데모 파일입니다</pre>")
+
+
 @app.api_route("/echo", methods=["GET", "POST"])
 async def echo(request: Request):
     body = await request.body()

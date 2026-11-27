@@ -89,7 +89,7 @@ export default function Policy({ ctx }: { ctx: Ctx }) {
           <ul className="list">
             {list.map((c, i) => (
               <li key={i}>
-                <span className="badge gray">{c.type === "rule" ? "룰" : c.type === "exception" ? "예외" : c.type === "path_threshold" ? "경로 임계값" : "정책"}</span>{" "}
+                <span className="badge gray">{c.type === "rule" ? "룰" : c.type === "exception" ? "예외" : c.type === "path_threshold" ? "경로 임계값" : c.type === "rule_override" ? "경로별 룰 모드" : "정책"}</span>{" "}
                 <span className="mono">{c.id}</span> {c.change}
               </li>
             ))}

@@ -6,8 +6,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from mpg.detection.models import PathThreshold, Policy, Rule, RuleException
-from mpg.detection.rules import exception_from_dict, path_threshold_from_dict, rule_from_dict
+from mpg.detection.models import PathRuleOverride, PathThreshold, Policy, Rule, RuleException
+from mpg.detection.rules import (
+    exception_from_dict,
+    path_threshold_from_dict,
+    rule_from_dict,
+    rule_override_from_dict,
+)
 
 
 def rule_to_dict(r: Rule) -> dict[str, Any]:
@@ -45,6 +50,11 @@ def path_threshold_to_dict(t: PathThreshold) -> dict[str, Any]:
     return {"id": t.id, "path": t.path, "param": t.param, "prefix": t.prefix, "threshold": t.threshold}
 
 
+def rule_override_to_dict(o: PathRuleOverride) -> dict[str, Any]:
+    return {"id": o.id, "path": o.path, "param": o.param, "prefix": o.prefix,
+            "rule_id": o.rule_id, "mode": o.mode.value}
+
+
 def policy_to_snapshot(p: Policy) -> dict[str, Any]:
     return {
         "version": p.version,
@@ -52,6 +62,7 @@ def policy_to_snapshot(p: Policy) -> dict[str, Any]:
         "rules": [rule_to_dict(r) for r in p.rules],
         "exceptions": [exception_to_dict(e) for e in p.exceptions],
         "path_thresholds": [path_threshold_to_dict(t) for t in p.path_thresholds],
+        "rule_overrides": [rule_override_to_dict(o) for o in p.rule_overrides],
     }
 
 
@@ -72,12 +83,16 @@ def policy_from_snapshot(snap: dict[str, Any] | str, version: int | None = None)
         exceptions=tuple(excs),
         threshold=th,
         path_thresholds=tuple(path_threshold_from_dict(t, th) for t in snap.get("path_thresholds") or ()),
+        rule_overrides=tuple(rule_override_from_dict(o, rules) for o in snap.get("rule_overrides") or ()),
     )
 
 
 def write_cache(path: Path, p: Policy) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
+    # 게이트웨이 여러 대·워커 여러 개가 같은 캐시 볼륨에 쓴다. 임시 파일 이름이 겹치면 서로 덮어쓰므로 프로세스마다 다르게.
+    import os
+    import secrets
+    tmp = path.with_suffix(f".{os.getpid()}.{secrets.token_hex(4)}.tmp")
     tmp.write_text(json.dumps(policy_to_snapshot(p), ensure_ascii=False), encoding="utf-8")
     tmp.replace(path)
 
