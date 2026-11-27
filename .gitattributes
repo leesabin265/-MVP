@@ -1,5 +1,8 @@
-*.sh text eol=lf
-*.acl text eol=lf
-deploy/nginx/*.conf text eol=lf
-src/mpg/admin/schema.sql text eol=lf
+# 모든 텍스트 파일을 LF로 고정한다. Windows(core.autocrlf=true)에서 받아도
+# 셸 스크립트·shebang(예: deploy/healthcheck.py)이 컨테이너 안에서 깨지지 않게 한다.
+* text=auto eol=lf
+
 *.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
