@@ -70,7 +70,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 }
 .brand { font-weight: 700; white-space: nowrap; }
 .logo { color: var(--accent); }
-.tabs { display: flex; gap: 2px; flex: 1; overflow-x: auto; }
+/* 탭이 많아 좁은 화면(발표용 노트북·프로젝터)에서 가로 스크롤로 숨지 않게 줄바꿈한다 */
+.tabs { display: flex; flex-wrap: wrap; gap: 2px; flex: 1; min-width: 0; }
 .tab { background: none; border: 0; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: var(--muted); white-space: nowrap; }
 .tab:hover { background: var(--surface-2); }
 .tab.active { color: var(--text); background: var(--surface-2); font-weight: 600; }
@@ -220,3 +221,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .cls-list .code { display: inline-block; margin: 4px 0; word-break: break-all; }
 .cls-board li { font-size: 1.3rem; font-weight: 700; padding: 2px 0; }
 @media (max-width: 900px) { .cls-cols { grid-template-columns: 1fr; } }
+
+/* 수업 참여 — 변장 챌린지(공격별 뚫림 현황) */
+.cls-cracks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 4px 0; }
+.cls-crack { padding: 14px 16px; }
+.cls-crack-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cls-crack-head b { font-size: 1.2rem; }
+.cls-crack-n { margin-top: 8px; font-size: 1.2rem; font-weight: 800; color: var(--muted); }
+.cls-crack-n.done { color: var(--green); }
+@media (max-width: 760px) { .cls-cracks { grid-template-columns: 1fr; } }
